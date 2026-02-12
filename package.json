@@ -13,6 +13,7 @@
     "@storybook/addon-a11y": "^10.2.8",
     "@storybook/addon-docs": "^10.2.8",
     "@storybook/react-vite": "^10.2.8",
+    "remark-gfm": "^4.0.1",
     "storybook": "^10.2.8",
     "typescript": "^5.9.3"
   }
