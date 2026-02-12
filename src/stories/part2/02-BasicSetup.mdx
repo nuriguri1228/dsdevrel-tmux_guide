@@ -143,23 +143,26 @@ claude
 # 오른쪽 pane: 일반 터미널 (빌드/테스트/Git)
 ```
 
-```
-기본 2-pane 레이아웃:
-
-┌─ tmux session: claude-dev ──────────────────┐
-│                                              │
-│  ┌─ Pane 0 ──────────┬─ Pane 1 ───────────┐ │
-│  │                    │                     │ │
-│  │  $ claude          │  $ git status       │ │
-│  │                    │  $ npm test         │ │
-│  │  Claude Code       │  일반 터미널         │ │
-│  │  대화형 세션        │  (빌드/테스트/Git)   │ │
-│  │                    │                     │ │
-│  └────────────────────┴─────────────────────┘ │
-│                                              │
-│  Status bar: [claude-dev] 0:bash             │
-└──────────────────────────────────────────────┘
-```
+<div style={{ border: '2px solid #4a9eff', borderRadius: '8px', overflow: 'hidden', margin: '20px 0', fontFamily: 'monospace', fontSize: '14px', maxWidth: '700px' }}>
+  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+    <div style={{ padding: '16px', background: '#1a1a2e', color: '#e0e0e0', borderRight: '2px solid #4a9eff', minHeight: '120px' }}>
+      <div style={{ color: '#4a9eff', fontWeight: 'bold', marginBottom: '8px' }}>Pane 0</div>
+      <div style={{ color: '#00e676' }}>$ claude</div>
+      <div style={{ color: '#aaa', marginTop: '8px' }}>Claude Code</div>
+      <div style={{ color: '#aaa' }}>대화형 세션</div>
+    </div>
+    <div style={{ padding: '16px', background: '#1a1a2e', color: '#e0e0e0', minHeight: '120px' }}>
+      <div style={{ color: '#4a9eff', fontWeight: 'bold', marginBottom: '8px' }}>Pane 1</div>
+      <div style={{ color: '#00e676' }}>$ git status</div>
+      <div style={{ color: '#00e676' }}>$ npm test</div>
+      <div style={{ color: '#aaa', marginTop: '8px' }}>일반 터미널</div>
+      <div style={{ color: '#aaa' }}>(빌드/테스트/Git)</div>
+    </div>
+  </div>
+  <div style={{ padding: '6px 12px', background: '#2d5016', color: '#a0d060', fontSize: '12px', borderTop: '2px solid #4a9eff' }}>
+    Status bar: [claude-dev] 0:bash
+  </div>
+</div>
 
 ### 에이전트 백그라운드 실행
 
@@ -210,38 +213,41 @@ claude
 
 작업을 요청하면 Claude Code는 다음과 같은 과정을 거칩니다:
 
-```
-Agent Team 실행 흐름:
-
-사용자 요청 입력
-       │
-       ▼
-┌──────────────────┐
-│ Team Lead가       │
-│ 작업을 분석        │
-│ "3개의 독립적인    │
-│  작업으로 분리"    │
-└────────┬─────────┘
-         │
-    ┌────┼────┐
-    │    │    │
-    ▼    ▼    ▼
-  Task  Task  Task
-  #1    #2    #3
-    │    │    │
-    ▼    ▼    ▼
-  Agent Agent Agent
-  생성   생성   생성
-    │    │    │
-    ▼    ▼    ▼
-  병렬로 작업 수행
-    │    │    │
-    └────┼────┘
-         │
-         ▼
-  Team Lead가
-  결과 통합 & 보고
-```
+<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', margin: '20px 0', maxWidth: '700px' }}>
+  <div style={{ padding: '10px 24px', background: '#e3f2fd', border: '2px solid #1976d2', borderRadius: '8px', fontWeight: 'bold', textAlign: 'center' }}>사용자 요청 입력</div>
+  <div style={{ fontSize: '24px', color: '#666' }}>↓</div>
+  <div style={{ padding: '14px 24px', background: '#f3e5f5', border: '2px solid #7b1fa2', borderRadius: '8px', textAlign: 'center' }}>
+    <div style={{ fontWeight: 'bold', color: '#7b1fa2' }}>Team Lead가 작업을 분석</div>
+    <div style={{ fontSize: '13px', color: '#555' }}>"3개의 독립적인 작업으로 분리"</div>
+  </div>
+  <div style={{ display: 'flex', justifyContent: 'center', gap: '4px', color: '#666', fontSize: '20px' }}>
+    <span>↙</span><span>↓</span><span>↘</span>
+  </div>
+  <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+      <div style={{ padding: '8px 16px', background: '#fff3e0', border: '2px solid #ff9800', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px' }}>Task #1</div>
+      <div style={{ fontSize: '18px', color: '#666' }}>↓</div>
+      <div style={{ padding: '8px 16px', background: '#f3e5f5', border: '2px solid #7b1fa2', borderRadius: '6px', fontSize: '13px', fontWeight: 'bold', color: '#7b1fa2' }}>Agent 생성</div>
+    </div>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+      <div style={{ padding: '8px 16px', background: '#fff3e0', border: '2px solid #ff9800', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px' }}>Task #2</div>
+      <div style={{ fontSize: '18px', color: '#666' }}>↓</div>
+      <div style={{ padding: '8px 16px', background: '#f3e5f5', border: '2px solid #7b1fa2', borderRadius: '6px', fontSize: '13px', fontWeight: 'bold', color: '#7b1fa2' }}>Agent 생성</div>
+    </div>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+      <div style={{ padding: '8px 16px', background: '#fff3e0', border: '2px solid #ff9800', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px' }}>Task #3</div>
+      <div style={{ fontSize: '18px', color: '#666' }}>↓</div>
+      <div style={{ padding: '8px 16px', background: '#f3e5f5', border: '2px solid #7b1fa2', borderRadius: '6px', fontSize: '13px', fontWeight: 'bold', color: '#7b1fa2' }}>Agent 생성</div>
+    </div>
+  </div>
+  <div style={{ fontSize: '24px', color: '#666' }}>↓</div>
+  <div style={{ padding: '10px 24px', background: '#e8f5e9', border: '2px solid #388e3c', borderRadius: '8px', fontWeight: 'bold', textAlign: 'center', color: '#2e7d32' }}>병렬로 작업 수행</div>
+  <div style={{ fontSize: '24px', color: '#666' }}>↓</div>
+  <div style={{ padding: '14px 24px', background: '#f3e5f5', border: '2px solid #7b1fa2', borderRadius: '8px', textAlign: 'center' }}>
+    <div style={{ fontWeight: 'bold', color: '#7b1fa2' }}>Team Lead가</div>
+    <div style={{ fontSize: '13px', color: '#555' }}>결과 통합 & 보고</div>
+  </div>
+</div>
 
 터미널에서 이 과정을 관찰하면 다음과 같은 출력을 볼 수 있습니다:
 
@@ -289,15 +295,20 @@ tmux new-session -s claude-dev \; \
   select-pane -t 0
 ```
 
-```
-┌──────────────────┬──────────────────┐
-│ Pane 0           │ Pane 1           │
-│                  │                  │
-│ $ claude         │ $ git status     │
-│ (Team Lead)      │ $ npm test       │
-│                  │ (결과 확인)       │
-└──────────────────┴──────────────────┘
-```
+<div style={{ border: '2px solid #4a9eff', borderRadius: '8px', overflow: 'hidden', margin: '20px 0', fontFamily: 'monospace', fontSize: '13px', maxWidth: '500px' }}>
+  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+    <div style={{ padding: '12px', background: '#1a1a2e', color: '#e0e0e0', borderRight: '2px solid #4a9eff' }}>
+      <div style={{ color: '#7b1fa2', fontWeight: 'bold', marginBottom: '6px' }}>Pane 0</div>
+      <div style={{ color: '#00e676' }}>$ claude</div>
+      <div style={{ color: '#aaa' }}>(Team Lead)</div>
+    </div>
+    <div style={{ padding: '12px', background: '#1a1a2e', color: '#e0e0e0' }}>
+      <div style={{ color: '#4a9eff', fontWeight: 'bold', marginBottom: '6px' }}>Pane 1</div>
+      <div style={{ color: '#00e676' }}>$ git status</div>
+      <div style={{ color: '#aaa' }}>$ npm test (결과 확인)</div>
+    </div>
+  </div>
+</div>
 
 ### 레이아웃 2: 3-pane (Team Lead + Agent + 터미널)
 
@@ -311,19 +322,24 @@ tmux new-session -s claude-dev \; \
   select-pane -t 0
 ```
 
-```
-┌──────────────────┬──────────────────┐
-│ Pane 0           │ Pane 1           │
-│                  │                  │
-│ $ claude         │ Agent 작업 관찰   │
-│ (Team Lead)      │                  │
-│                  ├──────────────────┤
-│                  │ Pane 2           │
-│                  │                  │
-│                  │ $ npm test       │
-│                  │ (터미널)          │
-└──────────────────┴──────────────────┘
-```
+<div style={{ border: '2px solid #4a9eff', borderRadius: '8px', overflow: 'hidden', margin: '20px 0', fontFamily: 'monospace', fontSize: '13px', maxWidth: '500px' }}>
+  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr' }}>
+    <div style={{ padding: '12px', background: '#1a1a2e', color: '#e0e0e0', borderRight: '2px solid #4a9eff', gridRow: '1 / 3' }}>
+      <div style={{ color: '#7b1fa2', fontWeight: 'bold', marginBottom: '6px' }}>Pane 0</div>
+      <div style={{ color: '#00e676' }}>$ claude</div>
+      <div style={{ color: '#aaa' }}>(Team Lead)</div>
+    </div>
+    <div style={{ padding: '12px', background: '#1a1a2e', color: '#e0e0e0', borderBottom: '2px solid #4a9eff' }}>
+      <div style={{ color: '#7b1fa2', fontWeight: 'bold', marginBottom: '6px' }}>Pane 1</div>
+      <div style={{ color: '#aaa' }}>Agent 작업 관찰</div>
+    </div>
+    <div style={{ padding: '12px', background: '#1a1a2e', color: '#e0e0e0' }}>
+      <div style={{ color: '#4a9eff', fontWeight: 'bold', marginBottom: '6px' }}>Pane 2</div>
+      <div style={{ color: '#00e676' }}>$ npm test</div>
+      <div style={{ color: '#aaa' }}>(터미널)</div>
+    </div>
+  </div>
+</div>
 
 ### 레이아웃 3: 4-pane 균등 분할 (다중 에이전트 모니터링)
 
@@ -339,22 +355,29 @@ tmux new-session -s agent-team \; \
   select-layout tiled
 ```
 
-```
-Agent Team 기본 모니터링 레이아웃:
-
-┌─ tmux session: agent-team ──────────────────┐
-│                                              │
-│  ┌─ Pane 0 ──────────┬─ Pane 1 ───────────┐ │
-│  │ Team Lead          │ Sub-Agent 1        │ │
-│  │ (작업 분배 중...)    │ (코드 작성 중...)    │ │
-│  ├────────────────────┼─────────────────────┤ │
-│  │ Pane 2             │ Pane 3             │ │
-│  │ Sub-Agent 2        │ 터미널 (모니터링)    │ │
-│  │ (테스트 작성 중...)  │ $ htop / git log   │ │
-│  └────────────────────┴─────────────────────┘ │
-│                                              │
-└──────────────────────────────────────────────┘
-```
+<div style={{ border: '2px solid #4a9eff', borderRadius: '8px', overflow: 'hidden', margin: '20px 0', fontFamily: 'monospace', fontSize: '14px', maxWidth: '700px' }}>
+  <div style={{ padding: '6px 12px', background: '#0d1117', color: '#4a9eff', fontSize: '12px', fontWeight: 'bold', borderBottom: '2px solid #4a9eff' }}>
+    tmux session: agent-team
+  </div>
+  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr' }}>
+    <div style={{ padding: '16px', background: '#1a1a2e', color: '#e0e0e0', borderRight: '2px solid #4a9eff', borderBottom: '2px solid #4a9eff' }}>
+      <div style={{ color: '#7b1fa2', fontWeight: 'bold', marginBottom: '8px' }}>Pane 0 - Team Lead</div>
+      <div style={{ color: '#aaa' }}>(작업 분배 중...)</div>
+    </div>
+    <div style={{ padding: '16px', background: '#1a1a2e', color: '#e0e0e0', borderBottom: '2px solid #4a9eff' }}>
+      <div style={{ color: '#7b1fa2', fontWeight: 'bold', marginBottom: '8px' }}>Pane 1 - Sub-Agent 1</div>
+      <div style={{ color: '#aaa' }}>(코드 작성 중...)</div>
+    </div>
+    <div style={{ padding: '16px', background: '#1a1a2e', color: '#e0e0e0', borderRight: '2px solid #4a9eff' }}>
+      <div style={{ color: '#7b1fa2', fontWeight: 'bold', marginBottom: '8px' }}>Pane 2 - Sub-Agent 2</div>
+      <div style={{ color: '#aaa' }}>(테스트 작성 중...)</div>
+    </div>
+    <div style={{ padding: '16px', background: '#1a1a2e', color: '#e0e0e0' }}>
+      <div style={{ color: '#4a9eff', fontWeight: 'bold', marginBottom: '8px' }}>Pane 3 - 터미널 (모니터링)</div>
+      <div style={{ color: '#00e676' }}>$ htop / git log</div>
+    </div>
+  </div>
+</div>
 
 ### 레이아웃 전환 단축키
 

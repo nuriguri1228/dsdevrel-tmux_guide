@@ -14,17 +14,30 @@ tmux를 활용하면 IDE와 유사한 개발 환경을 터미널에서 구현할
 
 ### 목표 레이아웃
 
-```text
-┌───────────────────────────────┬──────────────────┐
-│                               │   git status     │
-│                               │   (Pane 2)       │
-│        nvim .                 ├──────────────────┤
-│       (Pane 1)                │   npm run dev    │
-│                               │   (Pane 3)       │
-│        65% width              │   35% width      │
-└───────────────────────────────┴──────────────────┘
- [1:editor*  2:logs]                          12:00
-```
+<div style={{ margin: '20px 0', fontFamily: 'monospace', fontSize: '13px', maxWidth: '700px' }}>
+  <div style={{ border: '2px solid #4a9eff', borderRadius: '8px', overflow: 'hidden' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '65% 35%', gridTemplateRows: '1fr 1fr', height: '160px' }}>
+      <div style={{ background: '#1a1a2e', padding: '12px', borderRight: '2px solid #4a9eff', gridRow: '1 / 3', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ color: '#00e676', fontWeight: 'bold', marginBottom: '4px' }}>nvim .</div>
+        <div style={{ color: '#aaa', fontSize: '12px' }}>(Pane 1)</div>
+        <div style={{ color: '#4a9eff', fontSize: '11px', marginTop: '8px' }}>65% width</div>
+      </div>
+      <div style={{ background: '#1a1a2e', padding: '12px', borderBottom: '2px solid #4a9eff', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ color: '#e0e0e0', fontWeight: 'bold', marginBottom: '4px' }}>git status</div>
+        <div style={{ color: '#aaa', fontSize: '12px' }}>(Pane 2)</div>
+      </div>
+      <div style={{ background: '#1a1a2e', padding: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ color: '#e0e0e0', fontWeight: 'bold', marginBottom: '4px' }}>npm run dev</div>
+        <div style={{ color: '#aaa', fontSize: '12px' }}>(Pane 3)</div>
+        <div style={{ color: '#4a9eff', fontSize: '11px', marginTop: '8px' }}>35% width</div>
+      </div>
+    </div>
+    <div style={{ background: '#2d5016', color: '#e0e0e0', padding: '4px 12px', display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+      <span>[1:editor* &nbsp;2:logs]</span>
+      <span>12:00</span>
+    </div>
+  </div>
+</div>
 
 - **좌측 큰 페인**: 에디터 (vim/neovim)
 - **우측 상단**: git 상태 또는 파일 탐색
@@ -110,14 +123,23 @@ chmod +x dev-env.sh
 
 서버 모니터링 환경:
 
-```text
-┌────────────────────────────────────────────────────┐
-│                   htop (시스템 모니터)               │
-├────────────┬────────────┬──────────────────────────┤
-│ App Log    │ Error Log  │ Access Log               │
-│            │            │                          │
-└────────────┴────────────┴──────────────────────────┘
-```
+<div style={{ margin: '20px 0', fontFamily: 'monospace', fontSize: '13px', maxWidth: '700px', border: '2px solid #4a9eff', borderRadius: '8px', overflow: 'hidden' }}>
+  <div style={{ background: '#1a1a2e', padding: '16px', textAlign: 'center', borderBottom: '2px solid #4a9eff' }}>
+    <div style={{ color: '#00e676', fontWeight: 'bold' }}>htop</div>
+    <div style={{ color: '#aaa', fontSize: '12px' }}>(시스템 모니터)</div>
+  </div>
+  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.5fr', height: '70px' }}>
+    <div style={{ background: '#1a1a2e', padding: '10px', borderRight: '2px solid #4a9eff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <span style={{ color: '#e0e0e0' }}>App Log</span>
+    </div>
+    <div style={{ background: '#1a1a2e', padding: '10px', borderRight: '2px solid #4a9eff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <span style={{ color: '#ff9800' }}>Error Log</span>
+    </div>
+    <div style={{ background: '#1a1a2e', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <span style={{ color: '#e0e0e0' }}>Access Log</span>
+    </div>
+  </div>
+</div>
 
 ```bash
 #!/bin/bash
@@ -194,39 +216,49 @@ ssh -t $HOST "tmux attach -t $SESSION 2>/dev/null || tmux new -s $SESSION"
 
 SSH 연결이 의도치 않게 끊기는 상황은 자주 발생합니다. tmux를 사용하면 다음과 같이 대처할 수 있습니다.
 
-```text
-┌──────────────────────────────────────────┐
-│             복구 시나리오                   │
-│                                          │
-│  1. SSH 접속 중 작업                      │
-│     ssh → tmux 세션 안에서 빌드 실행       │
-│                                          │
-│  2. 네트워크 끊김 발생                     │
-│     SSH 연결 종료, 하지만 tmux 세션 유지!  │
-│                                          │
-│  3. 다시 접속                             │
-│     ssh → tmux attach                    │
-│     → 빌드가 계속 진행 중인 것을 확인      │
-└──────────────────────────────────────────┘
-```
+<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', margin: '20px 0', fontFamily: 'monospace', fontSize: '14px', maxWidth: '500px' }}>
+  <div style={{ fontWeight: 'bold', color: '#333', marginBottom: '4px', fontSize: '15px' }}>복구 시나리오</div>
+  <div style={{ padding: '12px 20px', background: '#e3f2fd', border: '2px solid #1976d2', borderRadius: '8px', width: '100%' }}>
+    <div style={{ fontWeight: 'bold', color: '#1976d2' }}>1. SSH 접속 중 작업</div>
+    <div style={{ color: '#555', fontSize: '13px', marginTop: '4px' }}>ssh → tmux 세션 안에서 빌드 실행</div>
+  </div>
+  <div style={{ fontSize: '24px', color: '#666' }}>↓</div>
+  <div style={{ padding: '12px 20px', background: '#fff3e0', border: '2px solid #ff9800', borderRadius: '8px', width: '100%' }}>
+    <div style={{ fontWeight: 'bold', color: '#ff9800' }}>2. 네트워크 끊김 발생</div>
+    <div style={{ color: '#555', fontSize: '13px', marginTop: '4px' }}>SSH 연결 종료, 하지만 <strong>tmux 세션 유지!</strong></div>
+  </div>
+  <div style={{ fontSize: '24px', color: '#666' }}>↓</div>
+  <div style={{ padding: '12px 20px', background: '#e8f5e9', border: '2px solid #4caf50', borderRadius: '8px', width: '100%' }}>
+    <div style={{ fontWeight: 'bold', color: '#4caf50' }}>3. 다시 접속</div>
+    <div style={{ color: '#555', fontSize: '13px', marginTop: '4px' }}>ssh → tmux attach → 빌드가 계속 진행 중인 것을 확인</div>
+  </div>
+</div>
 
 ### 중첩 tmux 처리 (로컬 + 원격)
 
 로컬에서 tmux를 사용하면서 SSH로 접속한 원격 서버에서도 tmux를 사용하면, Prefix 키가 충돌합니다.
 
-```text
-┌─ 로컬 tmux ──────────────────────────────────────┐
-│ Prefix: Ctrl+a                                    │
-│ ┌─ 원격 tmux (SSH) ─────────────────────────────┐ │
-│ │ Prefix: Ctrl+b (또는 Ctrl+a)                  │ │
-│ │                                               │ │
-│ │  원격 작업 내용                                 │ │
-│ │                                               │ │
-│ │ [remote-session] 0:bash*              14:00   │ │
-│ └───────────────────────────────────────────────┘ │
-│ [local-session] 0:ssh*  1:local         14:00    │
-└──────────────────────────────────────────────────┘
-```
+<div style={{ margin: '20px 0', fontFamily: 'monospace', fontSize: '13px', maxWidth: '700px' }}>
+  <div style={{ border: '3px solid #1976d2', borderRadius: '10px', overflow: 'hidden' }}>
+    <div style={{ background: '#e3f2fd', padding: '6px 12px', fontWeight: 'bold', color: '#1976d2', fontSize: '12px' }}>로컬 tmux &mdash; Prefix: Ctrl+a</div>
+    <div style={{ padding: '12px' }}>
+      <div style={{ border: '2px solid #ff9800', borderRadius: '8px', overflow: 'hidden' }}>
+        <div style={{ background: '#fff3e0', padding: '6px 12px', fontWeight: 'bold', color: '#ff9800', fontSize: '12px' }}>원격 tmux (SSH) &mdash; Prefix: Ctrl+b (또는 Ctrl+a)</div>
+        <div style={{ background: '#1a1a2e', color: '#e0e0e0', padding: '20px', textAlign: 'center', minHeight: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ color: '#aaa' }}>원격 작업 내용</span>
+        </div>
+        <div style={{ background: '#2d5016', color: '#e0e0e0', padding: '4px 12px', display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+          <span>[remote-session] 0:bash*</span>
+          <span>14:00</span>
+        </div>
+      </div>
+    </div>
+    <div style={{ background: '#2d5016', color: '#e0e0e0', padding: '4px 12px', display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+      <span>[local-session] 0:ssh* &nbsp;1:local</span>
+      <span>14:00</span>
+    </div>
+  </div>
+</div>
 
 #### 해결 방법 1: 다른 Prefix 사용
 
@@ -354,17 +386,27 @@ bind -n 'C-l' if-shell "$is_vim" 'send-keys C-l' 'select-pane -R'
 
 이 설정으로 다음과 같이 동작합니다:
 
-```text
-┌────────────────────┬──────────────────┐
-│  vim (split left)  │  vim (split      │
-│                    │   right)         │
-│   Ctrl+l →         │   Ctrl+l →       │  ← vim 내부
-├────────────────────┴──────────────────┤     이동과
-│                                       │     tmux 페인
-│  tmux pane (terminal)                 │     이동이 통합
-│  ← Ctrl+k 로 위 vim으로 이동           │
-└───────────────────────────────────────┘
-```
+<div style={{ display: 'flex', alignItems: 'center', gap: '16px', margin: '20px 0', fontFamily: 'monospace', fontSize: '13px', maxWidth: '700px' }}>
+  <div style={{ flex: 1, border: '2px solid #4a9eff', borderRadius: '8px', overflow: 'hidden' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '2px solid #4a9eff' }}>
+      <div style={{ background: '#1a1a2e', padding: '12px', borderRight: '2px solid #4a9eff', textAlign: 'center' }}>
+        <div style={{ color: '#00e676', fontWeight: 'bold', marginBottom: '4px' }}>vim (split left)</div>
+        <div style={{ color: '#ff9800', fontSize: '12px' }}>Ctrl+l →</div>
+      </div>
+      <div style={{ background: '#1a1a2e', padding: '12px', textAlign: 'center' }}>
+        <div style={{ color: '#00e676', fontWeight: 'bold', marginBottom: '4px' }}>vim (split right)</div>
+        <div style={{ color: '#ff9800', fontSize: '12px' }}>Ctrl+l →</div>
+      </div>
+    </div>
+    <div style={{ background: '#1a1a2e', padding: '14px', textAlign: 'center', position: 'relative' }}>
+      <div style={{ color: '#e0e0e0', fontWeight: 'bold', marginBottom: '4px' }}>tmux pane (terminal)</div>
+      <div style={{ color: '#ff9800', fontSize: '12px' }}>← Ctrl+k 로 위 vim으로 이동</div>
+    </div>
+  </div>
+  <div style={{ fontSize: '13px', color: '#666', maxWidth: '140px' }}>
+    <p style={{ margin: 0 }}>← vim 내부 이동과 tmux 페인 이동이 통합</p>
+  </div>
+</div>
 
 ### 효율적인 vim + tmux 워크플로우
 
@@ -429,17 +471,26 @@ set -g @resurrect-capture-pane-contents 'on'
 set -g @resurrect-strategy-nvim 'session'
 ```
 
-```text
-┌──────────┐    Prefix + Ctrl+s    ┌──────────────┐
-│  Running  │ ──────────────────→ │  Saved State  │
-│  Session  │    (저장)            │  (~/.tmux/    │
-│           │                     │   resurrect/) │
-└──────────┘                      └──────┬───────┘
-     ↑                                   │
-     │        Prefix + Ctrl+r            │
-     └───────────────────────────────────┘
-                  (복원)
-```
+<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', margin: '20px 0', fontFamily: 'monospace', fontSize: '13px', maxWidth: '700px', flexWrap: 'wrap' }}>
+  <div style={{ padding: '14px 20px', background: '#e3f2fd', border: '2px solid #1976d2', borderRadius: '8px', textAlign: 'center', minWidth: '120px' }}>
+    <div style={{ fontWeight: 'bold', color: '#1976d2' }}>Running</div>
+    <div style={{ color: '#555' }}>Session</div>
+  </div>
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+      <span style={{ fontSize: '12px', color: '#4caf50', fontWeight: 'bold' }}>Prefix + Ctrl+s (저장)</span>
+      <span style={{ fontSize: '20px', color: '#4caf50' }}>→</span>
+    </div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+      <span style={{ fontSize: '20px', color: '#ff9800' }}>←</span>
+      <span style={{ fontSize: '12px', color: '#ff9800', fontWeight: 'bold' }}>Prefix + Ctrl+r (복원)</span>
+    </div>
+  </div>
+  <div style={{ padding: '14px 20px', background: '#e8f5e9', border: '2px solid #4caf50', borderRadius: '8px', textAlign: 'center', minWidth: '120px' }}>
+    <div style={{ fontWeight: 'bold', color: '#4caf50' }}>Saved State</div>
+    <div style={{ color: '#555', fontSize: '12px' }}>~/.tmux/resurrect/</div>
+  </div>
+</div>
 
 | 단축키 | 설명 |
 |--------|------|
@@ -776,51 +827,59 @@ tmux kill-session -a
 
 ## 마무리: tmux 필수 명령어 치트시트
 
-```text
-┌────────────────────────────────────────────────────────────┐
-│                   tmux 필수 명령어 치트시트                  │
-├────────────────────────────────────────────────────────────┤
-│                                                            │
-│  세션 (Session)                                            │
-│  ─────────────────────────────────────────────────         │
-│  tmux new -s <name>        새 세션 생성                     │
-│  tmux ls                   세션 목록                        │
-│  tmux attach -t <name>     세션 재접속                      │
-│  tmux kill-session -t <n>  세션 종료                        │
-│  Prefix + d                세션 분리 (Detach)               │
-│  Prefix + s                세션 전환                        │
-│                                                            │
-│  윈도우 (Window)                                           │
-│  ─────────────────────────────────────────────────         │
-│  Prefix + c                새 윈도우                        │
-│  Prefix + n / p            다음 / 이전 윈도우               │
-│  Prefix + 0-9              번호로 이동                      │
-│  Prefix + ,                이름 변경                        │
-│  Prefix + &                윈도우 닫기                      │
-│                                                            │
-│  페인 (Pane)                                               │
-│  ─────────────────────────────────────────────────         │
-│  Prefix + "                수평 분할                        │
-│  Prefix + %                수직 분할                        │
-│  Prefix + 화살표           페인 이동                        │
-│  Prefix + z                확대/축소 (Zoom)                 │
-│  Prefix + x                페인 닫기                        │
-│  Prefix + Space            레이아웃 순환                    │
-│                                                            │
-│  복사 모드                                                  │
-│  ─────────────────────────────────────────────────         │
-│  Prefix + [                복사 모드 진입                   │
-│  Space → 이동 → Enter      선택 및 복사 (vi 모드)           │
-│  Prefix + ]                붙여넣기                         │
-│                                                            │
-│  기타                                                      │
-│  ─────────────────────────────────────────────────         │
-│  Prefix + :                명령 모드                        │
-│  Prefix + ?                키 바인딩 목록                   │
-│  tmux kill-server          서버 종료                        │
-│                                                            │
-└────────────────────────────────────────────────────────────┘
-```
+<div style={{ margin: '20px 0', fontFamily: 'monospace', fontSize: '13px', maxWidth: '700px', border: '2px solid #4a9eff', borderRadius: '10px', overflow: 'hidden' }}>
+  <div style={{ background: '#1976d2', color: '#fff', padding: '12px 20px', fontWeight: 'bold', fontSize: '16px', textAlign: 'center' }}>tmux 필수 명령어 치트시트</div>
+  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0' }}>
+    <div style={{ padding: '14px 16px', borderRight: '1px solid #e0e0e0', borderBottom: '1px solid #e0e0e0' }}>
+      <div style={{ fontWeight: 'bold', color: '#1976d2', marginBottom: '10px', fontSize: '14px' }}>세션 (Session)</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 12px', fontSize: '12px' }}>
+        <code style={{ color: '#1976d2' }}>tmux new -s &lt;name&gt;</code><span style={{ color: '#555' }}>새 세션 생성</span>
+        <code style={{ color: '#1976d2' }}>tmux ls</code><span style={{ color: '#555' }}>세션 목록</span>
+        <code style={{ color: '#1976d2' }}>tmux attach -t &lt;name&gt;</code><span style={{ color: '#555' }}>세션 재접속</span>
+        <code style={{ color: '#1976d2' }}>tmux kill-session -t &lt;n&gt;</code><span style={{ color: '#555' }}>세션 종료</span>
+        <code style={{ color: '#1976d2' }}>Prefix + d</code><span style={{ color: '#555' }}>세션 분리 (Detach)</span>
+        <code style={{ color: '#1976d2' }}>Prefix + s</code><span style={{ color: '#555' }}>세션 전환</span>
+      </div>
+    </div>
+    <div style={{ padding: '14px 16px', borderBottom: '1px solid #e0e0e0' }}>
+      <div style={{ fontWeight: 'bold', color: '#4caf50', marginBottom: '10px', fontSize: '14px' }}>윈도우 (Window)</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 12px', fontSize: '12px' }}>
+        <code style={{ color: '#4caf50' }}>Prefix + c</code><span style={{ color: '#555' }}>새 윈도우</span>
+        <code style={{ color: '#4caf50' }}>Prefix + n / p</code><span style={{ color: '#555' }}>다음 / 이전 윈도우</span>
+        <code style={{ color: '#4caf50' }}>Prefix + 0-9</code><span style={{ color: '#555' }}>번호로 이동</span>
+        <code style={{ color: '#4caf50' }}>Prefix + ,</code><span style={{ color: '#555' }}>이름 변경</span>
+        <code style={{ color: '#4caf50' }}>Prefix + &amp;</code><span style={{ color: '#555' }}>윈도우 닫기</span>
+      </div>
+    </div>
+    <div style={{ padding: '14px 16px', borderRight: '1px solid #e0e0e0', borderBottom: '1px solid #e0e0e0' }}>
+      <div style={{ fontWeight: 'bold', color: '#ff9800', marginBottom: '10px', fontSize: '14px' }}>페인 (Pane)</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 12px', fontSize: '12px' }}>
+        <code style={{ color: '#ff9800' }}>Prefix + "</code><span style={{ color: '#555' }}>수평 분할</span>
+        <code style={{ color: '#ff9800' }}>Prefix + %</code><span style={{ color: '#555' }}>수직 분할</span>
+        <code style={{ color: '#ff9800' }}>Prefix + 화살표</code><span style={{ color: '#555' }}>페인 이동</span>
+        <code style={{ color: '#ff9800' }}>Prefix + z</code><span style={{ color: '#555' }}>확대/축소 (Zoom)</span>
+        <code style={{ color: '#ff9800' }}>Prefix + x</code><span style={{ color: '#555' }}>페인 닫기</span>
+        <code style={{ color: '#ff9800' }}>Prefix + Space</code><span style={{ color: '#555' }}>레이아웃 순환</span>
+      </div>
+    </div>
+    <div style={{ padding: '14px 16px', borderBottom: '1px solid #e0e0e0' }}>
+      <div style={{ fontWeight: 'bold', color: '#e91e63', marginBottom: '10px', fontSize: '14px' }}>복사 모드</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 12px', fontSize: '12px' }}>
+        <code style={{ color: '#e91e63' }}>Prefix + [</code><span style={{ color: '#555' }}>복사 모드 진입</span>
+        <code style={{ color: '#e91e63' }}>Space → 이동 → Enter</code><span style={{ color: '#555' }}>선택 및 복사 (vi 모드)</span>
+        <code style={{ color: '#e91e63' }}>Prefix + ]</code><span style={{ color: '#555' }}>붙여넣기</span>
+      </div>
+    </div>
+  </div>
+  <div style={{ padding: '14px 16px', background: '#f5f5f5' }}>
+    <div style={{ fontWeight: 'bold', color: '#666', marginBottom: '10px', fontSize: '14px' }}>기타</div>
+    <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 12px', fontSize: '12px' }}>
+      <code style={{ color: '#666' }}>Prefix + :</code><span style={{ color: '#555' }}>명령 모드</span>
+      <code style={{ color: '#666' }}>Prefix + ?</code><span style={{ color: '#555' }}>키 바인딩 목록</span>
+      <code style={{ color: '#666' }}>tmux kill-server</code><span style={{ color: '#555' }}>서버 종료</span>
+    </div>
+  </div>
+</div>
 
 ---
 

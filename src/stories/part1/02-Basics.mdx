@@ -22,15 +22,24 @@ tmux의 기본 Prefix 키는 `Ctrl+b`입니다.
 2. 손을 뗍니다.
 3. 명령 키를 누릅니다 (예: `d`를 눌러 세션에서 분리).
 
-```text
-┌──────────────────────────────────────────┐
-│  Prefix 키 동작 흐름                       │
-│                                          │
-│  Step 1       Step 2       Step 3        │
-│  Ctrl+b  →  손을 뗌  →  명령키 (d, c 등) │
-│  (동시누름)              (단독으로 누름)    │
-└──────────────────────────────────────────┘
-```
+<div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '20px 0', fontFamily: 'monospace', fontSize: '14px', flexWrap: 'wrap', maxWidth: '700px' }}>
+  <div style={{ padding: '16px 20px', background: '#e3f2fd', border: '2px solid #1976d2', borderRadius: '8px', textAlign: 'center', minWidth: '120px' }}>
+    <div style={{ fontWeight: 'bold', color: '#1976d2', marginBottom: '4px' }}>Step 1</div>
+    <div style={{ fontSize: '16px', fontWeight: 'bold' }}>Ctrl+b</div>
+    <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>(동시에 누름)</div>
+  </div>
+  <div style={{ fontSize: '24px', color: '#666' }}>→</div>
+  <div style={{ padding: '16px 20px', background: '#fff3e0', border: '2px solid #ff9800', borderRadius: '8px', textAlign: 'center', minWidth: '120px' }}>
+    <div style={{ fontWeight: 'bold', color: '#ff9800', marginBottom: '4px' }}>Step 2</div>
+    <div style={{ fontSize: '16px', fontWeight: 'bold' }}>손을 뗌</div>
+  </div>
+  <div style={{ fontSize: '24px', color: '#666' }}>→</div>
+  <div style={{ padding: '16px 20px', background: '#e8f5e9', border: '2px solid #4caf50', borderRadius: '8px', textAlign: 'center', minWidth: '120px' }}>
+    <div style={{ fontWeight: 'bold', color: '#4caf50', marginBottom: '4px' }}>Step 3</div>
+    <div style={{ fontSize: '16px', fontWeight: 'bold' }}>명령키 (d, c 등)</div>
+    <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>(단독으로 누름)</div>
+  </div>
+</div>
 
 > **주의:** `Ctrl+b+d`처럼 세 키를 동시에 누르는 것이 아닙니다. `Ctrl+b`를 누르고 손을 뗀 뒤, `d`를 따로 누릅니다.
 
@@ -212,27 +221,51 @@ Prefix + %    현재 페인을 수직으로 분할 (좌/우로 나뉨)
 
 ### 분할 과정 시각화
 
-```text
-[초기 상태]              [수평 분할: Prefix + "]    [수직 분할: Prefix + %]
-┌──────────────┐        ┌──────────────┐           ┌──────┬───────┐
-│              │        │    Pane 0    │           │      │       │
-│   Pane 0     │   →    ├──────────────┤           │Pane 0│Pane 1 │
-│              │        │    Pane 1    │           │      │       │
-└──────────────┘        └──────────────┘           └──────┴───────┘
-```
+<div style={{ display: 'flex', alignItems: 'center', gap: '16px', margin: '20px 0', fontFamily: 'monospace', fontSize: '13px', flexWrap: 'wrap', maxWidth: '700px' }}>
+  <div style={{ textAlign: 'center' }}>
+    <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#333' }}>초기 상태</div>
+    <div style={{ width: '140px', height: '90px', border: '2px solid #4a9eff', borderRadius: '6px', background: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#e0e0e0' }}>Pane 0</div>
+  </div>
+  <div style={{ fontSize: '24px', color: '#666' }}>→</div>
+  <div style={{ textAlign: 'center' }}>
+    <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#333' }}>수평 분할: Prefix + "</div>
+    <div style={{ width: '140px', border: '2px solid #4a9eff', borderRadius: '6px', overflow: 'hidden' }}>
+      <div style={{ height: '44px', background: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#e0e0e0', borderBottom: '2px solid #4a9eff' }}>Pane 0</div>
+      <div style={{ height: '44px', background: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#00e676' }}>Pane 1</div>
+    </div>
+  </div>
+  <div style={{ fontSize: '24px', color: '#666' }}>→</div>
+  <div style={{ textAlign: 'center' }}>
+    <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#333' }}>수직 분할: Prefix + %</div>
+    <div style={{ width: '140px', height: '90px', border: '2px solid #4a9eff', borderRadius: '6px', overflow: 'hidden', display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+      <div style={{ background: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#e0e0e0', borderRight: '2px solid #4a9eff' }}>Pane 0</div>
+      <div style={{ background: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#00e676' }}>Pane 1</div>
+    </div>
+  </div>
+</div>
 
 ### 복합 분할 예시
 
 여러 번 분할하여 복잡한 레이아웃을 만들 수 있습니다.
 
-```text
-[Step 1: 수직 분할]     [Step 2: 우측을 수평 분할]
-┌──────┬───────┐        ┌──────┬───────┐
-│      │       │        │      │Pane 1 │
-│Pane 0│Pane 1 │   →    │Pane 0├───────┤
-│      │       │        │      │Pane 2 │
-└──────┴───────┘        └──────┴───────┘
-```
+<div style={{ display: 'flex', alignItems: 'center', gap: '16px', margin: '20px 0', fontFamily: 'monospace', fontSize: '13px', flexWrap: 'wrap', maxWidth: '700px' }}>
+  <div style={{ textAlign: 'center' }}>
+    <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#333' }}>Step 1: 수직 분할</div>
+    <div style={{ width: '160px', height: '100px', border: '2px solid #4a9eff', borderRadius: '6px', overflow: 'hidden', display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+      <div style={{ background: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#e0e0e0', borderRight: '2px solid #4a9eff' }}>Pane 0</div>
+      <div style={{ background: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#e0e0e0' }}>Pane 1</div>
+    </div>
+  </div>
+  <div style={{ fontSize: '24px', color: '#666' }}>→</div>
+  <div style={{ textAlign: 'center' }}>
+    <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#333' }}>Step 2: 우측을 수평 분할</div>
+    <div style={{ width: '160px', height: '100px', border: '2px solid #4a9eff', borderRadius: '6px', overflow: 'hidden', display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr' }}>
+      <div style={{ background: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#e0e0e0', borderRight: '2px solid #4a9eff', gridRow: '1 / 3' }}>Pane 0</div>
+      <div style={{ background: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#e0e0e0', borderBottom: '2px solid #4a9eff' }}>Pane 1</div>
+      <div style={{ background: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#00e676' }}>Pane 2</div>
+    </div>
+  </div>
+</div>
 
 > **팁:** 기본 단축키 `"` (수평)과 `%` (수직)가 직관적이지 않다면, 설정에서 `|` (수직)과 `-` (수평)로 변경할 수 있습니다. 4장에서 자세히 다룹니다.
 
@@ -266,17 +299,17 @@ Prefix + ;    직전에 활성화되었던 페인으로 전환
 Prefix + q    각 페인에 번호를 표시 (번호가 표시되는 동안 해당 번호를 누르면 이동)
 ```
 
-```text
-┌──────┬───────┐
-│      │       │
-│  0   │   1   │     ← Prefix + q 를 누르면 각 페인에
-│      │       │       번호가 크게 표시됩니다.
-│      ├───────┤       이때 1을 누르면 Pane 1로 이동합니다.
-│      │       │
-│      │   2   │
-│      │       │
-└──────┴───────┘
-```
+<div style={{ display: 'flex', alignItems: 'center', gap: '16px', margin: '20px 0', fontFamily: 'monospace', fontSize: '14px', maxWidth: '700px' }}>
+  <div style={{ width: '200px', height: '140px', border: '2px solid #4a9eff', borderRadius: '6px', overflow: 'hidden', display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr' }}>
+    <div style={{ background: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff9800', fontSize: '28px', fontWeight: 'bold', borderRight: '2px solid #4a9eff', gridRow: '1 / 3' }}>0</div>
+    <div style={{ background: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff9800', fontSize: '28px', fontWeight: 'bold', borderBottom: '2px solid #4a9eff' }}>1</div>
+    <div style={{ background: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff9800', fontSize: '28px', fontWeight: 'bold' }}>2</div>
+  </div>
+  <div style={{ fontSize: '13px', color: '#666', maxWidth: '280px' }}>
+    <p style={{ margin: '0 0 4px 0' }}>← <code>Prefix + q</code> 를 누르면 각 페인에 번호가 크게 표시됩니다.</p>
+    <p style={{ margin: 0 }}>이때 <code>1</code>을 누르면 Pane 1로 이동합니다.</p>
+  </div>
+</div>
 
 ---
 
@@ -298,17 +331,29 @@ Prefix + z    현재 페인을 전체 화면으로 확대 (다시 누르면 원�
 
 특정 페인에서 작업에 집중하고 싶을 때 유용합니다. 확대 상태에서는 상태바의 윈도우 이름 옆에 `Z` 표시가 나타납니다.
 
-```text
-[일반 상태]                          [Zoom 상태: Prefix + z]
-┌──────┬───────┐                    ┌──────────────────────┐
-│      │       │                    │                      │
-│Pane 0│Pane 1 │         →          │       Pane 1         │
-│      │       │                    │    (전체 화면)        │
-└──────┴───────┘                    │                      │
-                                    └──────────────────────┘
-상태바: [0:bash*]                   상태바: [0:bashZ*]
-                                                 ↑ Zoom 표시
-```
+<div style={{ display: 'flex', alignItems: 'center', gap: '16px', margin: '20px 0', fontFamily: 'monospace', fontSize: '13px', flexWrap: 'wrap', maxWidth: '700px' }}>
+  <div style={{ textAlign: 'center' }}>
+    <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#333' }}>일반 상태</div>
+    <div style={{ width: '160px', border: '2px solid #4a9eff', borderRadius: '6px', overflow: 'hidden' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', height: '70px' }}>
+        <div style={{ background: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#e0e0e0', borderRight: '2px solid #4a9eff' }}>Pane 0</div>
+        <div style={{ background: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#e0e0e0' }}>Pane 1</div>
+      </div>
+      <div style={{ background: '#2d5016', color: '#e0e0e0', padding: '2px 8px', fontSize: '11px' }}>[0:bash*]</div>
+    </div>
+  </div>
+  <div style={{ fontSize: '24px', color: '#666' }}>→</div>
+  <div style={{ textAlign: 'center' }}>
+    <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#333' }}>Zoom 상태: Prefix + z</div>
+    <div style={{ width: '160px', border: '2px solid #00e676', borderRadius: '6px', overflow: 'hidden' }}>
+      <div style={{ height: '70px', background: '#1a1a2e', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ color: '#00e676', fontWeight: 'bold' }}>Pane 1</div>
+        <div style={{ color: '#aaa', fontSize: '11px' }}>(전체 화면)</div>
+      </div>
+      <div style={{ background: '#2d5016', color: '#e0e0e0', padding: '2px 8px', fontSize: '11px' }}>[0:bash<span style={{ color: '#ff9800', fontWeight: 'bold' }}>Z</span>*] <span style={{ color: '#ff9800', fontSize: '10px' }}>← Zoom 표시</span></div>
+    </div>
+  </div>
+</div>
 
 ### 페인 위치 변경
 

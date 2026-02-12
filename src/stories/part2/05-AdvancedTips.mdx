@@ -184,28 +184,58 @@ tmux send-keys -t $SESSION:dashboard.5 \
   "watch -n 5 'echo \"=== File Counts ===\"; echo \"JS: \$(find src -name \"*.js\" 2>/dev/null | wc -l)\"; echo \"TS: \$(find src -name \"*.ts\" 2>/dev/null | wc -l)\"'" C-m
 ```
 
-```
-고급 모니터링 대시보드:
-
-┌─ Window: dashboard ─────────────────────────┐
-│                                              │
-│  ┌─ Git Status ──────┬─ Recent Commits ────┐ │
-│  │ M src/api.ts       │ a1b2c3 feat: tag    │ │
-│  │ A src/types/tag.ts │ d4e5f6 fix: auth    │ │
-│  │ M tests/api.test   │ g7h8i9 refactor     │ │
-│  ├────────────────────┼─────────────────────┤ │
-│  │ Modified Files     │ System Resources    │ │
-│  │ src/api.ts         │ CPU: ████░░░░ 48%   │ │
-│  │ src/types/tag.ts   │ MEM: ██████░░ 72%   │ │
-│  │ tests/api.test.ts  │ PID    CPU%  MEM%   │ │
-│  ├────────────────────┼─────────────────────┤ │
-│  │ Disk & Memory      │ File Counts         │ │
-│  │ /dev/sda1 45G/100G │ JS: 32              │ │
-│  │ Mem: 8.2G/16G      │ TS: 18              │ │
-│  └────────────────────┴─────────────────────┘ │
-│                                              │
-└──────────────────────────────────────────────┘
-```
+<div style={{ border: '2px solid #4a9eff', borderRadius: '8px', overflow: 'hidden', margin: '20px 0', fontFamily: 'monospace', fontSize: '13px', maxWidth: '700px' }}>
+  <div style={{ padding: '6px 12px', background: '#0d1117', color: '#4a9eff', fontWeight: 'bold', fontSize: '12px', borderBottom: '2px solid #4a9eff' }}>
+    Window: dashboard
+  </div>
+  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr 1fr' }}>
+    <div style={{ padding: '12px', background: '#1a1a2e', color: '#e0e0e0', borderRight: '2px solid #4a9eff', borderBottom: '2px solid #4a9eff' }}>
+      <div style={{ color: '#4a9eff', fontWeight: 'bold', marginBottom: '6px' }}>Git Status</div>
+      <div><span style={{ color: '#ff9800' }}>M</span> src/api.ts</div>
+      <div><span style={{ color: '#00e676' }}>A</span> src/types/tag.ts</div>
+      <div><span style={{ color: '#ff9800' }}>M</span> tests/api.test</div>
+    </div>
+    <div style={{ padding: '12px', background: '#1a1a2e', color: '#e0e0e0', borderBottom: '2px solid #4a9eff' }}>
+      <div style={{ color: '#4a9eff', fontWeight: 'bold', marginBottom: '6px' }}>Recent Commits</div>
+      <div style={{ color: '#aaa' }}>a1b2c3 feat: tag</div>
+      <div style={{ color: '#aaa' }}>d4e5f6 fix: auth</div>
+      <div style={{ color: '#aaa' }}>g7h8i9 refactor</div>
+    </div>
+    <div style={{ padding: '12px', background: '#1a1a2e', color: '#e0e0e0', borderRight: '2px solid #4a9eff', borderBottom: '2px solid #4a9eff' }}>
+      <div style={{ color: '#4a9eff', fontWeight: 'bold', marginBottom: '6px' }}>Modified Files</div>
+      <div style={{ color: '#aaa' }}>src/api.ts</div>
+      <div style={{ color: '#aaa' }}>src/types/tag.ts</div>
+      <div style={{ color: '#aaa' }}>tests/api.test.ts</div>
+    </div>
+    <div style={{ padding: '12px', background: '#1a1a2e', color: '#e0e0e0', borderBottom: '2px solid #4a9eff' }}>
+      <div style={{ color: '#4a9eff', fontWeight: 'bold', marginBottom: '6px' }}>System Resources</div>
+      <div>
+        <span style={{ color: '#aaa' }}>CPU: </span>
+        <span style={{ display: 'inline-block', width: '80px', height: '10px', background: '#333', borderRadius: '5px', overflow: 'hidden', verticalAlign: 'middle' }}>
+          <span style={{ display: 'block', width: '48%', height: '100%', background: '#ff9800', borderRadius: '5px' }}></span>
+        </span>
+        <span style={{ color: '#ff9800', marginLeft: '4px' }}>48%</span>
+      </div>
+      <div>
+        <span style={{ color: '#aaa' }}>MEM: </span>
+        <span style={{ display: 'inline-block', width: '80px', height: '10px', background: '#333', borderRadius: '5px', overflow: 'hidden', verticalAlign: 'middle' }}>
+          <span style={{ display: 'block', width: '72%', height: '100%', background: '#ff5252', borderRadius: '5px' }}></span>
+        </span>
+        <span style={{ color: '#ff5252', marginLeft: '4px' }}>72%</span>
+      </div>
+    </div>
+    <div style={{ padding: '12px', background: '#1a1a2e', color: '#e0e0e0', borderRight: '2px solid #4a9eff' }}>
+      <div style={{ color: '#4a9eff', fontWeight: 'bold', marginBottom: '6px' }}>Disk & Memory</div>
+      <div style={{ color: '#aaa' }}>/dev/sda1 45G/100G</div>
+      <div style={{ color: '#aaa' }}>Mem: 8.2G/16G</div>
+    </div>
+    <div style={{ padding: '12px', background: '#1a1a2e', color: '#e0e0e0' }}>
+      <div style={{ color: '#4a9eff', fontWeight: 'bold', marginBottom: '6px' }}>File Counts</div>
+      <div style={{ color: '#aaa' }}>JS: 32</div>
+      <div style={{ color: '#aaa' }}>TS: 18</div>
+    </div>
+  </div>
+</div>
 
 ### 알림 설정 (에이전트 작업 완료 시)
 
@@ -619,34 +649,52 @@ set-option -g allow-rename off
 
 문제가 발생했을 때 다음 흐름도를 참고하세요:
 
-```
-에이전트에 문제 발생
-    │
-    ├─ 에이전트가 응답하지 않음?
-    │   ├─ 1-2분 기다려봄 → 재개되면 정상 (API 대기)
-    │   ├─ 계속 멈춤 → Ctrl-C로 중단 후 재시도
-    │   └─ "Rate limit" 메시지 → 에이전트 수 줄이고 대기
-    │
-    ├─ 파일 충돌 발생?
-    │   ├─ git status로 충돌 파일 확인
-    │   ├─ 충돌 수동 해결 (에디터에서)
-    │   └─ Team Lead에게 수정 사실 알리고 재시도
-    │
-    ├─ 시스템 리소스 부족?
-    │   ├─ htop으로 CPU/메모리 확인
-    │   ├─ 불필요한 에이전트 종료
-    │   └─ 에이전트 수 줄여서 재시작
-    │
-    ├─ 에이전트가 잘못된 코드를 작성?
-    │   ├─ git diff로 변경사항 확인
-    │   ├─ git checkout -- [파일]로 변경 취소
-    │   └─ 더 구체적인 프롬프트로 재시도
-    │
-    └─ tmux 세션이 사라짐?
-        ├─ tmux ls로 세션 목록 확인
-        ├─ 세션 있으면 → tmux attach -t [이름]
-        └─ 세션 없으면 → 스크립트로 재구성
-                         (pipe-pane 로그로 진행 상황 확인)
-```
+<div style={{ margin: '20px 0', maxWidth: '700px' }}>
+  <div style={{ padding: '12px 20px', background: '#ffebee', border: '2px solid #d32f2f', borderRadius: '8px', fontWeight: 'bold', color: '#d32f2f', textAlign: 'center', marginBottom: '12px' }}>
+    에이전트에 문제 발생
+  </div>
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+    <div style={{ border: '2px solid #ff9800', borderRadius: '8px', overflow: 'hidden' }}>
+      <div style={{ padding: '8px 16px', background: '#ff9800', color: 'white', fontWeight: 'bold', fontSize: '14px' }}>에이전트가 응답하지 않음?</div>
+      <div style={{ padding: '10px 16px', background: '#fff3e0', fontSize: '13px' }}>
+        <div style={{ marginBottom: '4px' }}>1-2분 기다려봄 → 재개되면 정상 (API 대기)</div>
+        <div style={{ marginBottom: '4px' }}>계속 멈춤 → <code>Ctrl-C</code>로 중단 후 재시도</div>
+        <div>"Rate limit" 메시지 → 에이전트 수 줄이고 대기</div>
+      </div>
+    </div>
+    <div style={{ border: '2px solid #ff9800', borderRadius: '8px', overflow: 'hidden' }}>
+      <div style={{ padding: '8px 16px', background: '#ff9800', color: 'white', fontWeight: 'bold', fontSize: '14px' }}>파일 충돌 발생?</div>
+      <div style={{ padding: '10px 16px', background: '#fff3e0', fontSize: '13px' }}>
+        <div style={{ marginBottom: '4px' }}><code>git status</code>로 충돌 파일 확인</div>
+        <div style={{ marginBottom: '4px' }}>충돌 수동 해결 (에디터에서)</div>
+        <div>Team Lead에게 수정 사실 알리고 재시도</div>
+      </div>
+    </div>
+    <div style={{ border: '2px solid #ff9800', borderRadius: '8px', overflow: 'hidden' }}>
+      <div style={{ padding: '8px 16px', background: '#ff9800', color: 'white', fontWeight: 'bold', fontSize: '14px' }}>시스템 리소스 부족?</div>
+      <div style={{ padding: '10px 16px', background: '#fff3e0', fontSize: '13px' }}>
+        <div style={{ marginBottom: '4px' }}><code>htop</code>으로 CPU/메모리 확인</div>
+        <div style={{ marginBottom: '4px' }}>불필요한 에이전트 종료</div>
+        <div>에이전트 수 줄여서 재시작</div>
+      </div>
+    </div>
+    <div style={{ border: '2px solid #ff9800', borderRadius: '8px', overflow: 'hidden' }}>
+      <div style={{ padding: '8px 16px', background: '#ff9800', color: 'white', fontWeight: 'bold', fontSize: '14px' }}>에이전트가 잘못된 코드를 작성?</div>
+      <div style={{ padding: '10px 16px', background: '#fff3e0', fontSize: '13px' }}>
+        <div style={{ marginBottom: '4px' }}><code>git diff</code>로 변경사항 확인</div>
+        <div style={{ marginBottom: '4px' }}><code>git checkout -- [파일]</code>로 변경 취소</div>
+        <div>더 구체적인 프롬프트로 재시도</div>
+      </div>
+    </div>
+    <div style={{ border: '2px solid #ff9800', borderRadius: '8px', overflow: 'hidden' }}>
+      <div style={{ padding: '8px 16px', background: '#ff9800', color: 'white', fontWeight: 'bold', fontSize: '14px' }}>tmux 세션이 사라짐?</div>
+      <div style={{ padding: '10px 16px', background: '#fff3e0', fontSize: '13px' }}>
+        <div style={{ marginBottom: '4px' }}><code>tmux ls</code>로 세션 목록 확인</div>
+        <div style={{ marginBottom: '4px' }}>세션 있으면 → <code>tmux attach -t [이름]</code></div>
+        <div>세션 없으면 → 스크립트로 재구성 (pipe-pane 로그로 진행 상황 확인)</div>
+      </div>
+    </div>
+  </div>
+</div>
 
 다음 장에서는 빠른 참조 카드를 제공합니다.

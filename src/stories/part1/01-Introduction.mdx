@@ -21,24 +21,41 @@ tmux의 가장 중요한 특징은 **서버-클라이언트 아키텍처**입니
 
 이 구조 덕분에 SSH 연결이 끊겨도, 터미널을 실수로 닫아도, 실행 중인 작업은 안전하게 유지됩니다.
 
-```text
-┌─────────────────────────────────────────────────┐
-│                  tmux Server                     │
-│                                                  │
-│  ┌──────────────┐  ┌──────────────┐              │
-│  │  Session: dev │  │ Session: ops │              │
-│  │  ┌────┬────┐ │  │  ┌────┬────┐ │              │
-│  │  │Win1│Win2│ │  │  │Win1│Win2│ │              │
-│  │  └────┴────┘ │  │  └────┴────┘ │              │
-│  └──────────────┘  └──────────────┘              │
-│                                                  │
-└──────────────┬──────────────┬────────────────────┘
-               │              │
-        ┌──────┴──┐    ┌──────┴──┐
-        │Client A │    │Client B │
-        │(Terminal)│    │(Terminal)│
-        └─────────┘    └─────────┘
-```
+<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', margin: '20px 0', fontFamily: 'monospace', fontSize: '14px', maxWidth: '700px' }}>
+  <div style={{ width: '100%', border: '2px solid #4a9eff', borderRadius: '8px', padding: '16px', background: '#1a1a2e' }}>
+    <div style={{ color: '#4a9eff', fontWeight: 'bold', textAlign: 'center', marginBottom: '16px', fontSize: '16px' }}>tmux Server</div>
+    <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+      <div style={{ border: '1px solid #4a9eff', borderRadius: '6px', padding: '12px', background: '#0d1117', minWidth: '180px' }}>
+        <div style={{ color: '#00e676', fontWeight: 'bold', marginBottom: '8px' }}>Session: dev</div>
+        <div style={{ display: 'flex', gap: '4px' }}>
+          <div style={{ padding: '6px 12px', background: '#2d5016', color: '#e0e0e0', borderRadius: '4px', fontSize: '12px' }}>Win1</div>
+          <div style={{ padding: '6px 12px', background: '#2d5016', color: '#e0e0e0', borderRadius: '4px', fontSize: '12px' }}>Win2</div>
+        </div>
+      </div>
+      <div style={{ border: '1px solid #4a9eff', borderRadius: '6px', padding: '12px', background: '#0d1117', minWidth: '180px' }}>
+        <div style={{ color: '#00e676', fontWeight: 'bold', marginBottom: '8px' }}>Session: ops</div>
+        <div style={{ display: 'flex', gap: '4px' }}>
+          <div style={{ padding: '6px 12px', background: '#2d5016', color: '#e0e0e0', borderRadius: '4px', fontSize: '12px' }}>Win1</div>
+          <div style={{ padding: '6px 12px', background: '#2d5016', color: '#e0e0e0', borderRadius: '4px', fontSize: '12px' }}>Win2</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style={{ display: 'flex', gap: '80px', color: '#666', fontSize: '24px' }}>
+    <span>↓</span>
+    <span>↓</span>
+  </div>
+  <div style={{ display: 'flex', gap: '24px' }}>
+    <div style={{ padding: '12px 24px', background: '#e3f2fd', border: '2px solid #1976d2', borderRadius: '8px', fontWeight: 'bold', textAlign: 'center' }}>
+      <div>Client A</div>
+      <div style={{ fontSize: '12px', color: '#666', fontWeight: 'normal' }}>(Terminal)</div>
+    </div>
+    <div style={{ padding: '12px 24px', background: '#e3f2fd', border: '2px solid #1976d2', borderRadius: '8px', fontWeight: 'bold', textAlign: 'center' }}>
+      <div>Client B</div>
+      <div style={{ fontSize: '12px', color: '#666', fontWeight: 'normal' }}>(Terminal)</div>
+    </div>
+  </div>
+</div>
 
 ### GNU Screen과의 비교
 
@@ -164,17 +181,31 @@ tmux의 **최상위 단위**입니다. 하나의 세션은 독립적인 작업 �
 
 ### 계층 구조
 
-```text
-Session "development"
-├── Window 0: "editor"
-│   ├── Pane 0 (vim)
-│   └── Pane 1 (terminal)
-├── Window 1: "server"
-│   └── Pane 0 (npm start)
-└── Window 2: "logs"
-    ├── Pane 0 (app logs)
-    └── Pane 1 (system logs)
-```
+<div style={{ margin: '20px 0', fontFamily: 'monospace', fontSize: '14px', maxWidth: '500px' }}>
+  <div style={{ padding: '10px 16px', background: '#1976d2', color: '#fff', fontWeight: 'bold', borderRadius: '8px 8px 0 0' }}>Session "development"</div>
+  <div style={{ borderLeft: '3px solid #1976d2', marginLeft: '16px' }}>
+    <div style={{ padding: '8px 16px', borderBottom: '1px solid #e0e0e0', background: '#e3f2fd' }}>
+      <div style={{ fontWeight: 'bold', color: '#1976d2' }}>Window 0: "editor"</div>
+      <div style={{ marginLeft: '16px', borderLeft: '2px solid #4a9eff', paddingLeft: '12px', marginTop: '4px' }}>
+        <div style={{ color: '#333', padding: '2px 0' }}>Pane 0 (vim)</div>
+        <div style={{ color: '#333', padding: '2px 0' }}>Pane 1 (terminal)</div>
+      </div>
+    </div>
+    <div style={{ padding: '8px 16px', borderBottom: '1px solid #e0e0e0', background: '#e3f2fd' }}>
+      <div style={{ fontWeight: 'bold', color: '#1976d2' }}>Window 1: "server"</div>
+      <div style={{ marginLeft: '16px', borderLeft: '2px solid #4a9eff', paddingLeft: '12px', marginTop: '4px' }}>
+        <div style={{ color: '#333', padding: '2px 0' }}>Pane 0 (npm start)</div>
+      </div>
+    </div>
+    <div style={{ padding: '8px 16px', background: '#e3f2fd', borderRadius: '0 0 0 8px' }}>
+      <div style={{ fontWeight: 'bold', color: '#1976d2' }}>Window 2: "logs"</div>
+      <div style={{ marginLeft: '16px', borderLeft: '2px solid #4a9eff', paddingLeft: '12px', marginTop: '4px' }}>
+        <div style={{ color: '#333', padding: '2px 0' }}>Pane 0 (app logs)</div>
+        <div style={{ color: '#333', padding: '2px 0' }}>Pane 1 (system logs)</div>
+      </div>
+    </div>
+  </div>
+</div>
 
 이 구조를 실생활에 비유하면 다음과 같습니다.
 
@@ -198,20 +229,20 @@ tmux
 
 실행하면 화면이 바뀌면서 **하단에 초록색 상태바**가 나타납니다. 이것이 tmux 세션 안에 들어왔다는 표시입니다.
 
-```text
-┌──────────────────────────────────────────────────────┐
-│                                                      │
-│  user@server:~$                                      │
-│  █                                                   │
-│                                                      │
-│                                                      │
-│                                                      │
-│                                                      │
-├──────────────────────────────────────────────────────┤
-│ [0] 0:bash*                           "server" 14:00 │
-└──────────────────────────────────────────────────────┘
- ↑세션명  ↑윈도우 번호:이름              ↑호스트명  ↑시간
-```
+<div style={{ margin: '20px 0', fontFamily: 'monospace', fontSize: '14px', maxWidth: '700px', border: '2px solid #4a9eff', borderRadius: '8px', overflow: 'hidden' }}>
+  <div style={{ background: '#1a1a2e', color: '#e0e0e0', padding: '16px 20px', minHeight: '120px' }}>
+    <div>user@server:~$</div>
+    <div style={{ display: 'inline-block', width: '8px', height: '16px', background: '#e0e0e0', animation: 'blink 1s infinite' }}></div>
+  </div>
+  <div style={{ background: '#2d5016', color: '#e0e0e0', padding: '6px 12px', display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+    <span>[0] 0:bash*</span>
+    <span>"server" 14:00</span>
+  </div>
+</div>
+<div style={{ display: 'flex', justifyContent: 'space-between', maxWidth: '700px', fontSize: '12px', color: '#666', fontFamily: 'monospace', padding: '4px 12px' }}>
+  <span>↑세션명 &nbsp; ↑윈도우 번호:이름</span>
+  <span>↑호스트명 &nbsp; ↑시간</span>
+</div>
 
 ### 이름을 지정하여 세션 시작
 

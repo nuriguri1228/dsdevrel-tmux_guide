@@ -153,21 +153,23 @@ tmux의 상태바는 매우 유연하게 커스터마이징할 수 있습니다.
 
 #### 상태바 구조
 
-```text
-┌──────────────────────────────────────────────────────────┐
-│                    Terminal Window                          │
-│                                                            │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │                                                      │  │
-│  │                   Pane Content                        │  │
-│  │                                                      │  │
-│  └──────────────────────────────────────────────────────┘  │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │ [session] 0:bash  1:vim*  2:logs  │  2026-01-01 12:00│  │
-│  └──────────────────────────────────────────────────────┘  │
-│   ↑ status-left    ↑ window-status       ↑ status-right   │
-└──────────────────────────────────────────────────────────┘
-```
+<div style={{ margin: '20px 0', fontFamily: 'monospace', fontSize: '14px', maxWidth: '700px' }}>
+  <div style={{ border: '2px solid #4a9eff', borderRadius: '8px', overflow: 'hidden' }}>
+    <div style={{ background: '#e3f2fd', padding: '6px 12px', fontWeight: 'bold', color: '#1976d2', textAlign: 'center', fontSize: '12px', borderBottom: '1px solid #bbdefb' }}>Terminal Window</div>
+    <div style={{ background: '#1a1a2e', color: '#e0e0e0', padding: '24px 20px', textAlign: 'center', minHeight: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <span style={{ color: '#aaa' }}>Pane Content</span>
+    </div>
+    <div style={{ background: '#2d5016', color: '#e0e0e0', padding: '6px 12px', display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+      <span><span style={{ color: '#a5d6a7' }}>[session]</span> 0:bash &nbsp;1:vim* &nbsp;2:logs</span>
+      <span>2026-01-01 12:00</span>
+    </div>
+  </div>
+  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#666', padding: '6px 12px' }}>
+    <span>↑ <code>status-left</code></span>
+    <span>↑ <code>window-status</code></span>
+    <span>↑ <code>status-right</code></span>
+  </div>
+</div>
 
 #### 상태바 위치
 

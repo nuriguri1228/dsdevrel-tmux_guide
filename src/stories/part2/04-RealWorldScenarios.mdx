@@ -62,28 +62,51 @@ tmux select-window -t $SESSION:lead
 tmux attach -t $SESSION
 ```
 
-```
-시나리오 1 - 풀스택 개발 tmux 구성:
-
-Session: fullstack-todo
-├─ Window 0: lead
-│  └─ [Team Lead Claude Code 세션]
-│
-├─ Window 1: backend
-│  └─ [백엔드 에이전트 - API 개발]
-│
-├─ Window 2: frontend
-│  └─ [프론트엔드 에이전트 - UI 개발]
-│
-├─ Window 3: testing
-│  ├─ Pane 0: [테스트 에이전트]
-│  └─ Pane 1: [npm test --watch 실행 중]
-│
-└─ Window 4: monitor
-   ├─ Pane 0: [git diff 변경 추적]
-   ├─ Pane 1: [htop 리소스 모니터]
-   └─ Pane 2: [git status 파일 상태]
-```
+<div style={{ border: '2px solid #4a9eff', borderRadius: '8px', overflow: 'hidden', margin: '20px 0', fontSize: '14px', maxWidth: '600px' }}>
+  <div style={{ padding: '8px 16px', background: '#0d1117', color: '#4a9eff', fontWeight: 'bold', fontSize: '13px', borderBottom: '2px solid #4a9eff' }}>
+    Session: fullstack-todo
+  </div>
+  <div style={{ padding: '4px 0', background: '#1a1a2e' }}>
+    <div style={{ padding: '8px 16px', borderBottom: '1px solid #333' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ color: '#4a9eff', fontWeight: 'bold', fontFamily: 'monospace', fontSize: '12px', background: '#0d1117', padding: '2px 8px', borderRadius: '4px' }}>0</span>
+        <span style={{ color: '#7b1fa2', fontWeight: 'bold' }}>lead</span>
+      </div>
+      <div style={{ marginLeft: '40px', color: '#aaa', fontSize: '13px' }}>└─ Team Lead Claude Code 세션</div>
+    </div>
+    <div style={{ padding: '8px 16px', borderBottom: '1px solid #333' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ color: '#4a9eff', fontWeight: 'bold', fontFamily: 'monospace', fontSize: '12px', background: '#0d1117', padding: '2px 8px', borderRadius: '4px' }}>1</span>
+        <span style={{ color: '#7b1fa2', fontWeight: 'bold' }}>backend</span>
+      </div>
+      <div style={{ marginLeft: '40px', color: '#aaa', fontSize: '13px' }}>└─ 백엔드 에이전트 - API 개발</div>
+    </div>
+    <div style={{ padding: '8px 16px', borderBottom: '1px solid #333' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ color: '#4a9eff', fontWeight: 'bold', fontFamily: 'monospace', fontSize: '12px', background: '#0d1117', padding: '2px 8px', borderRadius: '4px' }}>2</span>
+        <span style={{ color: '#7b1fa2', fontWeight: 'bold' }}>frontend</span>
+      </div>
+      <div style={{ marginLeft: '40px', color: '#aaa', fontSize: '13px' }}>└─ 프론트엔드 에이전트 - UI 개발</div>
+    </div>
+    <div style={{ padding: '8px 16px', borderBottom: '1px solid #333' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ color: '#4a9eff', fontWeight: 'bold', fontFamily: 'monospace', fontSize: '12px', background: '#0d1117', padding: '2px 8px', borderRadius: '4px' }}>3</span>
+        <span style={{ color: '#7b1fa2', fontWeight: 'bold' }}>testing</span>
+      </div>
+      <div style={{ marginLeft: '40px', color: '#aaa', fontSize: '13px' }}>├─ Pane 0: 테스트 에이전트</div>
+      <div style={{ marginLeft: '40px', color: '#00e676', fontSize: '13px' }}>└─ Pane 1: npm test --watch 실행 중</div>
+    </div>
+    <div style={{ padding: '8px 16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ color: '#4a9eff', fontWeight: 'bold', fontFamily: 'monospace', fontSize: '12px', background: '#0d1117', padding: '2px 8px', borderRadius: '4px' }}>4</span>
+        <span style={{ color: '#00e676', fontWeight: 'bold' }}>monitor</span>
+      </div>
+      <div style={{ marginLeft: '40px', color: '#aaa', fontSize: '13px' }}>├─ Pane 0: git diff 변경 추적</div>
+      <div style={{ marginLeft: '40px', color: '#aaa', fontSize: '13px' }}>├─ Pane 1: htop 리소스 모니터</div>
+      <div style={{ marginLeft: '40px', color: '#aaa', fontSize: '13px' }}>└─ Pane 2: git status 파일 상태</div>
+    </div>
+  </div>
+</div>
 
 ### Step 2: Team Lead에게 작업 지시
 
@@ -204,26 +227,41 @@ tmux select-window -t $SESSION:lead
 tmux attach -t $SESSION
 ```
 
-```
-시나리오 2 - 리팩토링 진행 대시보드:
-
-┌─────────────────────────────────────────────┐
-│ Window: dashboard                            │
-├──────────────────────┬──────────────────────┤
-│ Migration Progress   │ TypeScript Compiler  │
-│                      │                      │
-│ JS files: 45 -> 32   │ $ npx tsc --watch    │
-│ TS files:  0 -> 13   │                      │
-│ Progress: ████░ 29%  │ Errors: 12 -> 8 -> 3 │
-│                      │                      │
-├──────────────────────┼──────────────────────┤
-│ Git Changes          │ Git Log              │
-│                      │                      │
-│ $ watch git diff     │ abc1234 types: User  │
-│   --stat             │ def5678 convert: api │
-│ 13 files changed     │ ghi9012 test: auth   │
-└──────────────────────┴──────────────────────┘
-```
+<div style={{ border: '2px solid #4a9eff', borderRadius: '8px', overflow: 'hidden', margin: '20px 0', fontFamily: 'monospace', fontSize: '13px', maxWidth: '700px' }}>
+  <div style={{ padding: '6px 12px', background: '#0d1117', color: '#4a9eff', fontWeight: 'bold', fontSize: '12px', borderBottom: '2px solid #4a9eff' }}>
+    Window: dashboard
+  </div>
+  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr' }}>
+    <div style={{ padding: '14px', background: '#1a1a2e', color: '#e0e0e0', borderRight: '2px solid #4a9eff', borderBottom: '2px solid #4a9eff' }}>
+      <div style={{ color: '#ff9800', fontWeight: 'bold', marginBottom: '8px' }}>Migration Progress</div>
+      <div style={{ color: '#aaa' }}>JS files: 45 → 32</div>
+      <div style={{ color: '#aaa' }}>TS files: &nbsp;0 → 13</div>
+      <div style={{ marginTop: '8px' }}>
+        <span style={{ color: '#aaa' }}>Progress: </span>
+        <span style={{ display: 'inline-block', width: '100px', height: '12px', background: '#333', borderRadius: '6px', overflow: 'hidden', verticalAlign: 'middle' }}>
+          <span style={{ display: 'block', width: '29%', height: '100%', background: '#00e676', borderRadius: '6px' }}></span>
+        </span>
+        <span style={{ color: '#00e676', marginLeft: '6px' }}>29%</span>
+      </div>
+    </div>
+    <div style={{ padding: '14px', background: '#1a1a2e', color: '#e0e0e0', borderBottom: '2px solid #4a9eff' }}>
+      <div style={{ color: '#ff9800', fontWeight: 'bold', marginBottom: '8px' }}>TypeScript Compiler</div>
+      <div style={{ color: '#00e676' }}>$ npx tsc --watch</div>
+      <div style={{ color: '#aaa', marginTop: '8px' }}>Errors: <span style={{ color: '#ff5252' }}>12</span> → <span style={{ color: '#ff9800' }}>8</span> → <span style={{ color: '#00e676' }}>3</span></div>
+    </div>
+    <div style={{ padding: '14px', background: '#1a1a2e', color: '#e0e0e0', borderRight: '2px solid #4a9eff' }}>
+      <div style={{ color: '#4a9eff', fontWeight: 'bold', marginBottom: '8px' }}>Git Changes</div>
+      <div style={{ color: '#00e676' }}>$ watch git diff --stat</div>
+      <div style={{ color: '#aaa', marginTop: '4px' }}>13 files changed</div>
+    </div>
+    <div style={{ padding: '14px', background: '#1a1a2e', color: '#e0e0e0' }}>
+      <div style={{ color: '#4a9eff', fontWeight: 'bold', marginBottom: '8px' }}>Git Log</div>
+      <div style={{ color: '#aaa' }}>abc1234 types: User</div>
+      <div style={{ color: '#aaa' }}>def5678 convert: api</div>
+      <div style={{ color: '#aaa' }}>ghi9012 test: auth</div>
+    </div>
+  </div>
+</div>
 
 ### Step 2: 마이그레이션 프롬프트
 
@@ -350,29 +388,32 @@ Agent Team으로 병렬 처리:
 
 이 시나리오에서는 에이전트의 작업 성격이 다릅니다:
 
-```
-에이전트별 작업 성격:
-
-Agent 1 (리뷰어):
-  ┌──────────┐     ┌──────────┐
-  │ src/ 읽기 │ ──> │REVIEW.md │  읽기 중심, 보고서만 작성
-  └──────────┘     │ 작성     │
-                   └──────────┘
-
-Agent 2 (문서화):
-  ┌──────────┐     ┌──────────┐
-  │ src/ 읽기 │ ──> │ src/ 수정 │  기존 파일에 주석 추가
-  └──────────┘     │(주석만)   │
-                   └──────────┘
-
-Agent 3 (프로젝트 문서):
-  ┌──────────┐     ┌──────────┐
-  │ 프로젝트   │ ──> │ docs/    │  새 문서 파일 생성
-  │ 분석      │     │ 생성     │
-  └──────────┘     └──────────┘
-
-충돌 가능 영역: 없음 (각자 다른 파일 수정)
-```
+<div style={{ display: 'flex', flexDirection: 'column', gap: '12px', margin: '20px 0', maxWidth: '700px' }}>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: '#f3e5f5', border: '2px solid #7b1fa2', borderRadius: '8px', flexWrap: 'wrap' }}>
+    <span style={{ fontWeight: 'bold', color: '#7b1fa2', minWidth: '140px' }}>Agent 1 (리뷰어)</span>
+    <div style={{ padding: '6px 14px', background: 'white', border: '1px solid #1976d2', borderRadius: '6px', fontSize: '13px' }}>src/ 읽기</div>
+    <span style={{ fontSize: '20px', color: '#666' }}>→</span>
+    <div style={{ padding: '6px 14px', background: 'white', border: '1px solid #1976d2', borderRadius: '6px', fontSize: '13px' }}>REVIEW.md 작성</div>
+    <span style={{ fontSize: '13px', color: '#555', fontStyle: 'italic' }}>읽기 중심, 보고서만 작성</span>
+  </div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: '#f3e5f5', border: '2px solid #7b1fa2', borderRadius: '8px', flexWrap: 'wrap' }}>
+    <span style={{ fontWeight: 'bold', color: '#7b1fa2', minWidth: '140px' }}>Agent 2 (문서화)</span>
+    <div style={{ padding: '6px 14px', background: 'white', border: '1px solid #1976d2', borderRadius: '6px', fontSize: '13px' }}>src/ 읽기</div>
+    <span style={{ fontSize: '20px', color: '#666' }}>→</span>
+    <div style={{ padding: '6px 14px', background: 'white', border: '1px solid #1976d2', borderRadius: '6px', fontSize: '13px' }}>src/ 수정 (주석만)</div>
+    <span style={{ fontSize: '13px', color: '#555', fontStyle: 'italic' }}>기존 파일에 주석 추가</span>
+  </div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: '#f3e5f5', border: '2px solid #7b1fa2', borderRadius: '8px', flexWrap: 'wrap' }}>
+    <span style={{ fontWeight: 'bold', color: '#7b1fa2', minWidth: '140px' }}>Agent 3 (프로젝트 문서)</span>
+    <div style={{ padding: '6px 14px', background: 'white', border: '1px solid #1976d2', borderRadius: '6px', fontSize: '13px' }}>프로젝트 분석</div>
+    <span style={{ fontSize: '20px', color: '#666' }}>→</span>
+    <div style={{ padding: '6px 14px', background: 'white', border: '1px solid #1976d2', borderRadius: '6px', fontSize: '13px' }}>docs/ 생성</div>
+    <span style={{ fontSize: '13px', color: '#555', fontStyle: 'italic' }}>새 문서 파일 생성</span>
+  </div>
+  <div style={{ padding: '8px 16px', background: '#e8f5e9', border: '2px solid #388e3c', borderRadius: '8px', textAlign: 'center', fontWeight: 'bold', color: '#2e7d32', fontSize: '13px' }}>
+    충돌 가능 영역: 없음 (각자 다른 파일 수정)
+  </div>
+</div>
 
 ### Step 4: 분석 결과 전달
 
