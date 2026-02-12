@@ -1,0 +1,431 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="1부: Linux tmux 가이드/03. 세션 & 윈도우 관리" />
+
+# 세션 & 윈도우 관리
+
+여러 세션을 효율적으로 운영하고, 윈도우 재배치, 페인 레이아웃, 복사 모드를 활용하는 방법을 배웁니다.
+
+---
+
+## 3.1 여러 세션 동시 관리
+
+실무에서는 프로젝트별로 세션을 분리하여 운영하는 것이 일반적입니다. 세션을 체계적으로 관리하면 작업 전환이 빨라지고 컨텍스트를 유지하기 쉬워집니다.
+
+### 프로젝트별 세션 운영 전략
+
+```bash
+# 프로젝트별 세션을 백그라운드에서 생성
+tmux new -s frontend -d      # -d 옵션: 생성만 하고 접속하지 않음
+tmux new -s backend -d
+tmux new -s database -d
+
+# 세션 목록 확인
+tmux ls
+```
+
+출력 예시:
+
+```text
+backend: 1 windows (created Thu Jan  1 10:01:00 2026)
+database: 1 windows (created Thu Jan  1 10:02:00 2026)
+frontend: 1 windows (created Thu Jan  1 10:00:00 2026)
+```
+
+### 세션 간 전환
+
+tmux 세션 안에서 다른 세션으로 전환하는 방법은 여러 가지가 있습니다.
+
+```text
+Prefix + s    세션 트리 뷰 열기 (화살표로 선택, Enter로 전환)
+Prefix + (    이전 세션으로 전환
+Prefix + )    다음 세션으로 전환
+```
+
+### 세션 트리 뷰 활용
+
+`Prefix + s`를 누르면 모든 세션, 윈도우, 페인을 트리 구조로 볼 수 있습니다.
+
+```text
+Prefix + s 또는 Prefix + w 로 확인:
+
+(0) + frontend: 3 windows
+      (0) + editor: 2 panes
+      (1) + terminal: 1 panes
+      (2) + browser: 1 panes
+(1) + backend: 2 windows
+      (0) + code: 2 panes
+      (1) + server: 1 panes
+(2) - database: 1 windows  ← 현재 세션
+      (0) > query: 1 panes
+```
+
+트리 뷰에서 사용할 수 있는 키:
+
+| 키 | 동작 |
+|----|------|
+| `↑` / `↓` | 항목 간 이동 |
+| `→` | 하위 항목 펼치기 |
+| `←` | 상위 항목 접기 |
+| `Enter` | 선택한 항목으로 전환 |
+| `x` | 선택한 항목 종료 |
+| `q` | 트리 뷰 닫기 |
+
+> **팁:** `Prefix + w`는 윈도우 레벨까지 펼친 상태로 트리 뷰를 엽니다. `Prefix + s`는 세션 레벨에서 시작합니다. 용도에 따라 적절한 것을 사용하세요.
+
+---
+
+## 3.2 세션 이름 지정 및 전환
+
+### 의미 있는 세션 이름의 중요성
+
+세션 번호(0, 1, 2...)만으로는 어떤 작업을 하고 있는지 구분하기 어렵습니다. 항상 의미 있는 이름을 붙이는 습관을 들이세요.
+
+```bash
+# 좋은 예
+tmux new -s webapp-frontend
+tmux new -s api-server
+tmux new -s data-pipeline
+
+# 나쁜 예 (나중에 구분하기 어려움)
+tmux new -s work1
+tmux new -s work2
+```
+
+### 세션 이름 변경
+
+이미 생성된 세션의 이름을 변경할 수 있습니다.
+
+```text
+Prefix + $    현재 세션 이름 변경 (하단에 입력 프롬프트 표시)
+```
+
+또는 명령줄에서:
+
+```bash
+tmux rename-session -t old-name new-name
+```
+
+### 명령줄에서 세션 전환
+
+```bash
+tmux switch -t backend
+```
+
+### 세션 존재 여부 확인 (스크립트용)
+
+자동화 스크립트에서 세션이 이미 존재하는지 확인한 뒤 생성하거나 접속하는 패턴이 자주 사용됩니다.
+
+```bash
+# 세션이 존재하면 접속, 없으면 생성
+tmux has-session -t myproject 2>/dev/null \
+  && tmux attach -t myproject \
+  || tmux new -s myproject
+```
+
+---
+
+## 3.3 윈도우 재배치 및 이동
+
+### 윈도우 번호 재정렬
+
+윈도우를 닫으면 번호에 빈 자리가 생깁니다. 예를 들어 윈도우 0, 1, 2에서 1을 닫으면 0, 2만 남습니다.
+
+```bash
+# 윈도우 번호를 수동으로 변경
+# tmux 명령 모드(Prefix + :)에서:
+move-window -s 2 -t 1
+```
+
+자동 재정렬을 원하면 설정 파일에 다음을 추가합니다.
+
+```bash
+# ~/.tmux.conf
+set -g renumber-windows on
+```
+
+### 윈도우를 다른 세션으로 이동
+
+특정 윈도우를 다른 세션으로 옮길 수 있습니다.
+
+```bash
+# 현재 윈도우를 'backend' 세션으로 이동
+# tmux 명령 모드(Prefix + :)에서:
+move-window -t backend
+
+# 특정 세션의 특정 윈도우를 다른 세션으로 이동
+tmux move-window -s frontend:2 -t backend
+```
+
+### 윈도우 연결 (Link)
+
+한 윈도우를 여러 세션에서 동시에 볼 수 있습니다. 원본을 복사하는 것이 아니라, 하나의 윈도우를 여러 세션에서 공유합니다.
+
+```bash
+# frontend 세션의 윈도우 0을 현재 세션에 연결
+tmux link-window -s frontend:0
+```
+
+---
+
+## 3.4 페인 레이아웃
+
+tmux는 5가지 기본 레이아웃을 제공합니다. `Prefix + Space`를 반복해서 누르면 레이아웃이 순환됩니다.
+
+### 5가지 기본 레이아웃
+
+```text
+even-horizontal           even-vertical            main-horizontal
+┌────┬────┬────┐         ┌──────────────┐         ┌──────────────┐
+│    │    │    │         │    Pane 0    │         │   Pane 0     │
+│ P0 │ P1 │ P2 │         ├──────────────┤         │   (main)     │
+│    │    │    │         │    Pane 1    │         ├────┬────┬────┤
+│    │    │    │         ├──────────────┤         │ P1 │ P2 │ P3 │
+└────┴────┴────┘         │    Pane 2    │         └────┴────┴────┘
+                          └──────────────┘
+
+main-vertical             tiled
+┌────────┬─────┐         ┌───────┬──────┐
+│        │ P1  │         │  P0   │  P1  │
+│  P0    ├─────┤         ├───────┼──────┤
+│ (main) │ P2  │         │  P2   │  P3  │
+│        ├─────┤         └───────┴──────┘
+│        │ P3  │
+└────────┴─────┘
+```
+
+| 레이아웃 | 설명 | 적합한 상황 |
+|----------|------|-------------|
+| `even-horizontal` | 모든 페인을 좌우로 균등 배치 | 비교 작업, 로그 모니터링 |
+| `even-vertical` | 모든 페인을 상하로 균등 배치 | 단계별 작업 확인 |
+| `main-horizontal` | 상단 메인 + 하단 나머지 | 에디터(상단) + 보조 터미널(하단) |
+| `main-vertical` | 좌측 메인 + 우측 나머지 | 에디터(좌측) + 보조(우측) |
+| `tiled` | 격자형 배치 | 여러 서버 동시 모니터링 |
+
+### 레이아웃 직접 지정
+
+tmux 명령 모드(`Prefix + :`)에서 레이아웃을 직접 지정할 수 있습니다.
+
+```bash
+# 명령 모드에서
+select-layout main-vertical
+
+# 또는 외부에서
+tmux select-layout -t mysession main-vertical
+```
+
+### 레이아웃 순환
+
+```text
+Prefix + Space    다음 레이아웃으로 순환 변경
+```
+
+원하는 레이아웃이 나올 때까지 `Prefix + Space`를 반복하면 됩니다.
+
+---
+
+## 3.5 페인 크기 조절
+
+### 단축키로 조절
+
+```text
+Prefix + Ctrl+화살표    해당 방향으로 1칸 크기 조절
+Prefix + Alt+화살표     해당 방향으로 5칸 크기 조절 (빠른 조절)
+```
+
+### 명령어로 조절
+
+tmux 명령 모드(`Prefix + :`)에서 더 정밀하게 조절할 수 있습니다.
+
+```bash
+# 아래로 10줄 확장
+resize-pane -D 10
+
+# 오른쪽으로 20칸 확장
+resize-pane -R 20
+
+# 위로 5줄 축소
+resize-pane -U 5
+
+# 왼쪽으로 10칸 축소
+resize-pane -L 10
+```
+
+외부 명령줄에서도 사용할 수 있습니다.
+
+```bash
+tmux resize-pane -D 10
+tmux resize-pane -R 20
+```
+
+### 마우스를 이용한 크기 조절
+
+마우스 모드를 활성화하면 페인 경계선을 드래그하여 크기를 조절할 수 있습니다.
+
+```bash
+# ~/.tmux.conf에 추가
+set -g mouse on
+```
+
+마우스 모드를 활성화하면 다음 기능도 함께 사용할 수 있습니다:
+- 페인 클릭으로 포커스 이동
+- 스크롤 휠로 히스토리 탐색
+- 텍스트 드래그로 선택
+
+---
+
+## 3.6 복사 모드 (Copy Mode)
+
+tmux에서 화면에 표시된 텍스트를 복사하거나, 위로 스크롤하여 이전 출력을 확인하려면 **복사 모드**를 사용합니다.
+
+### 복사 모드 진입 및 종료
+
+```text
+Prefix + [    복사 모드 진입
+q             복사 모드 종료 (또는 Esc)
+```
+
+복사 모드에 진입하면 화면 우측 상단에 커서 위치 정보가 표시됩니다.
+
+### vi 모드 vs emacs 모드
+
+복사 모드의 키 바인딩은 두 가지 스타일을 지원합니다.
+
+```bash
+# vi 모드 사용 (권장 - vim 사용자에게 익숙)
+setw -g mode-keys vi
+
+# emacs 모드 (기본값)
+setw -g mode-keys emacs
+```
+
+아래 설명은 **vi 모드** 기준입니다.
+
+### 복사 모드에서 이동
+
+| 키 | 동작 |
+|----|------|
+| `h` `j` `k` `l` | 좌/하/상/우 이동 |
+| `w` | 다음 단어 |
+| `b` | 이전 단어 |
+| `0` | 줄 시작 |
+| `$` | 줄 끝 |
+| `g` | 버퍼 맨 위 |
+| `G` | 버퍼 맨 아래 |
+| `Ctrl+u` | 반 페이지 위로 |
+| `Ctrl+d` | 반 페이지 아래로 |
+
+### 검색
+
+| 키 | 동작 |
+|----|------|
+| `/` | 정방향 검색 (아래로) |
+| `?` | 역방향 검색 (위로) |
+| `n` | 다음 검색 결과 |
+| `N` | 이전 검색 결과 |
+
+### 텍스트 선택 및 복사
+
+vi 모드에서의 복사 과정:
+
+```text
+1. Prefix + [         복사 모드 진입
+2. 이동키로 위치 이동
+3. Space              선택 시작
+4. 이동키로 범위 지정
+5. Enter              선택 영역 복사 (자동으로 복사 모드 종료)
+6. Prefix + ]         붙여넣기
+```
+
+```text
+┌──────────────────────────────────────┐
+│ 복사 모드 워크플로우                    │
+│                                      │
+│  Prefix + [  →  이동  →  Space       │
+│                          (선택시작)   │
+│                            │         │
+│                   이동 (범위 지정)     │
+│                            │         │
+│                          Enter       │
+│                        (복사완료)     │
+│                            │         │
+│              Prefix + ]  (붙여넣기)   │
+└──────────────────────────────────────┘
+```
+
+### 스크롤백 버퍼 크기 설정
+
+기본 스크롤백 버퍼는 2000줄입니다. 긴 로그를 확인해야 한다면 버퍼 크기를 늘릴 수 있습니다.
+
+```bash
+# ~/.tmux.conf
+set -g history-limit 50000
+```
+
+### 시스템 클립보드와 연동
+
+tmux의 복사 버퍼는 기본적으로 tmux 내부에서만 사용됩니다. 시스템 클립보드와 연동하려면 추가 설정이 필요합니다.
+
+```bash
+# xclip 설치 (X11 환경)
+sudo apt install xclip
+
+# ~/.tmux.conf에 추가 (vi 모드 기준)
+bind -T copy-mode-vi y send -X copy-pipe-and-cancel "xclip -selection clipboard"
+bind -T copy-mode-vi Enter send -X copy-pipe-and-cancel "xclip -selection clipboard"
+```
+
+이렇게 설정하면 `y` 또는 `Enter`로 복사할 때 시스템 클립보드에도 자동으로 복사됩니다.
+
+Wayland 환경에서는 `wl-copy`를 사용합니다:
+
+```bash
+# wl-clipboard 설치
+sudo apt install wl-clipboard
+
+# ~/.tmux.conf
+bind -T copy-mode-vi y send -X copy-pipe-and-cancel "wl-copy"
+```
+
+---
+
+## 단축키 총정리
+
+### 세션 관리
+
+| 단축키 | 설명 |
+|--------|------|
+| `Prefix + s` | 세션 트리 뷰 열기 |
+| `Prefix + w` | 윈도우/세션 트리 뷰 열기 |
+| `Prefix + $` | 현재 세션 이름 변경 |
+| `Prefix + (` | 이전 세션으로 전환 |
+| `Prefix + )` | 다음 세션으로 전환 |
+
+### 페인 레이아웃/크기 조절
+
+| 단축키 | 설명 |
+|--------|------|
+| `Prefix + Space` | 다음 레이아웃으로 순환 |
+| `Prefix + Ctrl+화살표` | 페인 크기 1칸 조절 |
+| `Prefix + Alt+화살표` | 페인 크기 5칸 조절 |
+
+### 복사 모드 (vi 모드 기준)
+
+| 단축키 | 설명 |
+|--------|------|
+| `Prefix + [` | 복사 모드 진입 |
+| `Prefix + ]` | 붙여넣기 |
+| `q` | 복사 모드 종료 |
+| `Space` | 선택 시작 |
+| `Enter` | 선택 영역 복사 |
+| `/` | 정방향 검색 |
+| `?` | 역방향 검색 |
+| `n` / `N` | 다음/이전 검색 결과 |
+| `g` | 버퍼 맨 위 |
+| `G` | 버퍼 맨 아래 |
+
+---
+
+## 다음 단계
+
+세션과 윈도우를 능숙하게 관리할 수 있게 되었다면, 다음 챕터에서 `.tmux.conf` 설정 파일을 통해 tmux를 **자신만의 도구로 커스터마이징**하는 방법을 배웁니다.

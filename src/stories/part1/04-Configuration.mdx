@@ -1,0 +1,443 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="1부: Linux tmux 가이드/04. 설정 & 커스터마이징" />
+
+# 설정 & 커스터마이징
+
+`.tmux.conf` 파일을 작성하여 tmux를 자신만의 도구로 만들어 봅니다. Prefix 키 변경, 직관적인 키 바인딩, 상태바 꾸미기, 색상 설정까지 다룹니다.
+
+---
+
+## 4.1 .tmux.conf 파일 기본 구조
+
+tmux의 모든 설정은 `~/.tmux.conf` 파일에 작성합니다. 이 파일은 tmux 서버가 시작될 때 자동으로 읽힙니다.
+
+### 설정 파일 위치
+
+```bash
+# 기본 위치
+~/.tmux.conf
+
+# XDG 규격 (tmux 3.1+)
+~/.config/tmux/tmux.conf
+```
+
+### 설정 파일 문법
+
+```bash
+# 주석은 #으로 시작합니다
+
+# set: 서버/세션 옵션 설정
+set -g option-name value      # -g: 글로벌 (모든 세션에 적용)
+set option-name value          # 현재 세션에만 적용
+
+# setw (set-window-option): 윈도우 옵션 설정
+setw -g option-name value     # -g: 글로벌
+
+# bind: 키 바인딩 설정
+bind key command              # Prefix + key 로 실행
+bind -n key command           # Prefix 없이 key만으로 실행
+
+# unbind: 키 바인딩 해제
+unbind key
+```
+
+### 설정 즉시 적용
+
+설정 파일을 수정한 뒤 tmux를 재시작하지 않아도 적용할 수 있습니다.
+
+```text
+# tmux 명령 모드에서 (Prefix + :):
+source-file ~/.tmux.conf
+```
+
+### 설정 리로드 단축키 만들기
+
+설정 파일을 자주 수정한다면, 리로드 단축키를 만들어 두면 편리합니다.
+
+```bash
+# ~/.tmux.conf
+bind r source-file ~/.tmux.conf \; display-message "Config reloaded!"
+```
+
+이제 `Prefix + r`을 누르면 설정이 즉시 적용되고 "Config reloaded!" 메시지가 표시됩니다.
+
+---
+
+## 4.2 유용한 설정 예시
+
+### 4.2.1 마우스 지원
+
+tmux 2.1 이후 버전에서는 한 줄로 마우스 전체 기능을 활성화할 수 있습니다.
+
+```bash
+# 마우스 지원 활성화
+set -g mouse on
+```
+
+활성화되는 기능:
+- 페인 클릭으로 포커스 이동
+- 페인 경계선 드래그로 크기 조절
+- 스크롤 휠로 히스토리 탐색 (자동으로 복사 모드 진입)
+- 윈도우 이름 클릭으로 윈도우 전환
+
+> **참고:** 마우스 모드가 켜져 있으면 터미널의 기본 텍스트 선택이 tmux에 의해 가로채집니다. 터미널 기본 선택을 사용하려면 `Shift`를 누른 채로 드래그하세요.
+
+### 4.2.2 Prefix 키 변경
+
+기본 Prefix인 `Ctrl+b`는 손가락이 멀리 뻗어야 하므로 불편할 수 있습니다. GNU Screen에서 사용하던 `Ctrl+a`로 변경하는 것이 일반적입니다.
+
+```bash
+# Ctrl+b 바인딩 해제
+unbind C-b
+
+# Prefix를 Ctrl+a로 변경
+set -g prefix C-a
+
+# Ctrl+a를 두 번 누르면 실제 Ctrl+a를 프로그램에 전달
+bind C-a send-prefix
+```
+
+> **주의:** `Ctrl+a`는 bash에서 "줄 시작으로 이동" 단축키입니다. Prefix로 변경하면 이 기능을 사용하려면 `Ctrl+a`를 두 번 눌러야 합니다. 이것이 불편하다면 `Ctrl+Space` 등 다른 키를 고려하세요.
+
+### 4.2.3 직관적인 키 바인딩
+
+#### 페인 분할
+
+기본 단축키 `"` (수평)과 `%` (수직)는 직관적이지 않습니다. 시각적으로 의미가 통하는 `|`와 `-`로 변경합니다.
+
+```bash
+# 수직 분할 (좌/우): |
+bind | split-window -h -c "#{pane_current_path}"
+
+# 수평 분할 (위/아래): -
+bind - split-window -v -c "#{pane_current_path}"
+
+# 기존 키 해제
+unbind '"'
+unbind %
+```
+
+`-c "#{pane_current_path}"` 옵션은 새로 생성된 페인이 현재 페인의 작업 디렉터리를 유지하도록 합니다.
+
+#### vim 스타일 페인 이동
+
+```bash
+# hjkl로 페인 이동
+bind h select-pane -L
+bind j select-pane -D
+bind k select-pane -U
+bind l select-pane -R
+```
+
+#### vim 스타일 페인 크기 조절
+
+```bash
+# 대문자 HJKL로 크기 조절 (5칸씩)
+# -r 옵션: 반복 가능 (Prefix를 다시 누르지 않아도 연속 입력 가능)
+bind -r H resize-pane -L 5
+bind -r J resize-pane -D 5
+bind -r K resize-pane -U 5
+bind -r L resize-pane -R 5
+```
+
+#### 새 윈도우에서 현재 경로 유지
+
+```bash
+bind c new-window -c "#{pane_current_path}"
+```
+
+### 4.2.4 상태바 커스터마이징
+
+tmux의 상태바는 매우 유연하게 커스터마이징할 수 있습니다.
+
+#### 상태바 구조
+
+```text
+┌──────────────────────────────────────────────────────────┐
+│                    Terminal Window                          │
+│                                                            │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │                                                      │  │
+│  │                   Pane Content                        │  │
+│  │                                                      │  │
+│  └──────────────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │ [session] 0:bash  1:vim*  2:logs  │  2026-01-01 12:00│  │
+│  └──────────────────────────────────────────────────────┘  │
+│   ↑ status-left    ↑ window-status       ↑ status-right   │
+└──────────────────────────────────────────────────────────┘
+```
+
+#### 상태바 위치
+
+```bash
+# 상태바를 상단으로 이동
+set -g status-position top
+
+# 상태바를 하단에 배치 (기본값)
+set -g status-position bottom
+```
+
+#### 상태바 색상 및 스타일
+
+```bash
+# 상태바 전체 스타일
+set -g status-style 'bg=#1e1e2e fg=#cdd6f4'
+
+# 상태바 좌측 (세션명)
+set -g status-left-length 30
+set -g status-left '#[fg=#1e1e2e,bg=#89b4fa,bold] #S #[default] '
+
+# 상태바 우측 (날짜/시간)
+set -g status-right-length 50
+set -g status-right '#[fg=#bac2de] %Y-%m-%d #[fg=#cdd6f4,bold]%H:%M '
+
+# 현재 윈도우 표시 (강조)
+setw -g window-status-current-format '#[fg=#1e1e2e,bg=#a6e3a1,bold] #I:#W '
+
+# 비활성 윈도우 표시
+setw -g window-status-format '#[fg=#bac2de] #I:#W '
+```
+
+#### 상태바에서 사용 가능한 변수
+
+| 변수 | 설명 |
+|------|------|
+| `#S` | 세션 이름 |
+| `#I` | 윈도우 번호 |
+| `#W` | 윈도우 이름 |
+| `#P` | 페인 번호 |
+| `#H` | 호스트명 |
+| `#h` | 짧은 호스트명 |
+| `#T` | 페인 제목 |
+| `%Y-%m-%d` | 날짜 (YYYY-MM-DD) |
+| `%H:%M` | 시간 (HH:MM) |
+
+### 4.2.5 기본 동작 개선
+
+```bash
+# 윈도우/페인 인덱스를 1부터 시작 (0은 키보드에서 멀리 있음)
+set -g base-index 1
+setw -g pane-base-index 1
+
+# 윈도우 번호 자동 재정렬
+set -g renumber-windows on
+
+# 히스토리(스크롤백) 크기 증가
+set -g history-limit 50000
+
+# 이스케이프 타임 줄이기 (vim 사용 시 ESC 지연 제거)
+set -sg escape-time 0
+
+# 메시지 표시 시간 증가
+set -g display-time 4000
+
+# 페인 번호 표시 시간 증가 (Prefix + q)
+set -g display-panes-time 3000
+
+# 포커스 이벤트 전달 (vim 등에서 유용)
+set -g focus-events on
+```
+
+---
+
+## 4.3 256 색상 / True Color 설정
+
+터미널 에뮬레이터에서 지원하는 색상을 tmux 안에서도 올바르게 표시하려면 추가 설정이 필요합니다.
+
+### 256 색상 설정
+
+```bash
+# default-terminal 설정
+set -g default-terminal "tmux-256color"
+```
+
+> **참고:** `screen-256color`를 사용할 수도 있지만, `tmux-256color`가 더 정확한 터미널 기능 정보를 제공합니다. 다만 시스템에 `tmux-256color` terminfo가 없으면 `screen-256color`를 사용하세요.
+
+### True Color (24-bit) 활성화
+
+```bash
+# True Color 지원 (터미널 에뮬레이터가 지원해야 함)
+set -ag terminal-overrides ",xterm-256color:RGB"
+```
+
+### 색상 확인
+
+256 색상이 올바르게 표시되는지 확인하는 스크립트:
+
+```bash
+# 256 색상 확인
+for i in {0..255}; do
+    printf "\x1b[38;5;${i}mcolor%-5i\x1b[0m" $i
+    if (( (i + 1) % 8 == 0 )); then
+        printf "\n"
+    fi
+done
+```
+
+True Color 확인:
+
+```bash
+# True Color 테스트 (그라데이션이 부드럽게 표시되어야 함)
+printf "\x1b[38;2;255;100;0mTrueColor Test\x1b[0m\n"
+
+# 더 상세한 테스트
+awk 'BEGIN{
+    for (colnum = 0; colnum<77; colnum++) {
+        r = 255-(colnum*255/76);
+        g = (colnum*510/76);
+        b = (colnum*255/76);
+        if (g>255) g = 510-g;
+        printf "\033[48;2;%d;%d;%dm", r,g,b;
+        printf "\033[38;2;%d;%d;%dm", 255-r,255-g,255-b;
+        printf "%s\033[0m", substr("TrueColor Test - Smooth gradient means it works!",colnum+1,1);
+    }
+    printf "\n";
+}'
+```
+
+---
+
+## 4.4 vi 모드 vs emacs 모드
+
+tmux의 복사 모드와 명령줄 모드에서 사용하는 키 바인딩 스타일을 선택할 수 있습니다.
+
+### vi 모드 설정
+
+```bash
+# 복사 모드에서 vi 키 바인딩 사용
+setw -g mode-keys vi
+
+# 명령줄 모드에서도 vi 키 바인딩 사용 (선택)
+set -g status-keys vi
+```
+
+### vi 모드 복사 개선 설정
+
+기본 vi 모드의 복사 동작을 더 직관적으로 만드는 설정입니다.
+
+```bash
+# 복사 모드 진입
+bind v copy-mode
+
+# vi 스타일 선택 및 복사
+bind -T copy-mode-vi v send -X begin-selection          # v: 선택 시작
+bind -T copy-mode-vi V send -X select-line              # V: 줄 선택
+bind -T copy-mode-vi C-v send -X rectangle-toggle       # Ctrl+v: 블록 선택
+bind -T copy-mode-vi y send -X copy-pipe-and-cancel "xclip -selection clipboard"  # y: 복사
+bind -T copy-mode-vi Escape send -X cancel              # Escape: 취소
+```
+
+이 설정으로 vim에서 텍스트를 선택하고 복사하는 것과 동일한 경험을 tmux 복사 모드에서 얻을 수 있습니다.
+
+---
+
+## 4.5 완성된 설정 파일 예시
+
+지금까지 다룬 내용을 종합한 `.tmux.conf` 파일입니다. 이 파일을 그대로 사용하거나, 필요한 부분만 골라 사용할 수 있습니다.
+
+```bash
+# =============================================================
+# ~/.tmux.conf - tmux 설정 파일
+# =============================================================
+
+# ------ Prefix 키 변경 ------
+unbind C-b
+set -g prefix C-a
+bind C-a send-prefix
+
+# ------ 설정 리로드 ------
+bind r source-file ~/.tmux.conf \; display-message "Config reloaded!"
+
+# ------ 마우스 지원 ------
+set -g mouse on
+
+# ------ 인덱스 설정 ------
+set -g base-index 1
+setw -g pane-base-index 1
+set -g renumber-windows on
+
+# ------ 페인 분할 (직관적 키) ------
+bind | split-window -h -c "#{pane_current_path}"
+bind - split-window -v -c "#{pane_current_path}"
+unbind '"'
+unbind %
+
+# 새 윈도우에서 현재 경로 유지
+bind c new-window -c "#{pane_current_path}"
+
+# ------ 페인 이동 (vim 스타일) ------
+bind h select-pane -L
+bind j select-pane -D
+bind k select-pane -U
+bind l select-pane -R
+
+# ------ 페인 크기 조절 ------
+bind -r H resize-pane -L 5
+bind -r J resize-pane -D 5
+bind -r K resize-pane -U 5
+bind -r L resize-pane -R 5
+
+# ------ 복사 모드 (vi 스타일) ------
+setw -g mode-keys vi
+bind v copy-mode
+bind -T copy-mode-vi v send -X begin-selection
+bind -T copy-mode-vi V send -X select-line
+bind -T copy-mode-vi C-v send -X rectangle-toggle
+bind -T copy-mode-vi y send -X copy-pipe-and-cancel "xclip -selection clipboard"
+bind -T copy-mode-vi Escape send -X cancel
+
+# ------ 히스토리 ------
+set -g history-limit 50000
+
+# ------ 타이밍 ------
+set -sg escape-time 0
+set -g display-time 4000
+set -g display-panes-time 3000
+
+# ------ 색상 ------
+set -g default-terminal "tmux-256color"
+set -ag terminal-overrides ",xterm-256color:RGB"
+
+# ------ 포커스 이벤트 ------
+set -g focus-events on
+
+# ------ 상태바 ------
+set -g status-position bottom
+set -g status-style 'bg=#1e1e2e fg=#cdd6f4'
+set -g status-interval 5
+
+set -g status-left-length 30
+set -g status-left '#[fg=#1e1e2e,bg=#89b4fa,bold] #S #[default] '
+
+set -g status-right-length 50
+set -g status-right '#[fg=#bac2de] %Y-%m-%d #[fg=#cdd6f4,bold]%H:%M '
+
+setw -g window-status-current-format '#[fg=#1e1e2e,bg=#a6e3a1,bold] #I:#W '
+setw -g window-status-format '#[fg=#bac2de] #I:#W '
+
+# ------ 페인 경계선 ------
+set -g pane-border-style 'fg=#45475a'
+set -g pane-active-border-style 'fg=#89b4fa'
+```
+
+---
+
+## 설정 관련 명령 요약
+
+| 명령/단축키 | 설명 |
+|-------------|------|
+| `Prefix + :` | tmux 명령 모드 진입 |
+| `:source-file ~/.tmux.conf` | 설정 파일 리로드 |
+| `:set -g option value` | 글로벌 옵션 설정 |
+| `:setw option value` | 윈도우 옵션 설정 |
+| `:show-options -g` | 글로벌 옵션 확인 |
+| `:list-keys` | 모든 키 바인딩 확인 |
+| `:display-message "test"` | 상태바에 메시지 표시 |
+
+---
+
+## 다음 단계
+
+tmux를 자신의 취향에 맞게 설정했다면, 다음 챕터에서 **실전 워크플로우**를 배웁니다. IDE와 유사한 개발 환경 구축, SSH 원격 작업, 세션 공유, 플러그인 관리, 환경 자동화까지 다룹니다.

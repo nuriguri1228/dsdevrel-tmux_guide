@@ -1,0 +1,511 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="2부: Claude Code Agent Team/03. Agent Team 운영 전략" />
+
+# Agent Team 운영 전략
+
+기본 환경을 구축했으니, 이제 Agent Team을 효과적으로 운영하는 전략을 살펴봅니다.
+에이전트 역할 분배, tmux 구조 설계, 작업 의존성 관리, 프롬프트 설계까지
+실전에서 바로 적용할 수 있는 전략을 다룹니다.
+
+---
+
+## 3.1 에이전트 역할 분배 전략
+
+### 역할별 에이전트 유형
+
+Agent Team에서 Sub-agent에게 부여할 수 있는 대표적인 역할들을 정리합니다.
+
+| 역할 | 영문명 | 주요 업무 | 적합한 작업 |
+|------|--------|----------|------------|
+| **코더** | Coder | 새로운 코드 작성, 기능 구현 | 기능 개발, API 구현 |
+| **리뷰어** | Reviewer | 코드 리뷰, 품질 검증 | 코드 품질 분석, 보안 점검 |
+| **테스터** | Tester | 테스트 코드 작성, 테스트 실행 | 단위/통합 테스트 |
+| **리서처** | Researcher | 코드베이스 분석, 문서 탐색 | 기존 코드 이해, 의존성 분석 |
+| **리팩토러** | Refactorer | 코드 개선, 성능 최적화 | 코드 정리, 아키텍처 개선 |
+| **문서화** | Documenter | JSDoc, README, API 문서 | 문서 생성, 주석 추가 |
+
+### 작업 유형에 따른 역할 조합
+
+프로젝트의 작업 유형에 따라 에이전트 조합을 다르게 구성합니다.
+
+```
+작업 유형별 권장 에이전트 조합:
+
+[새 기능 개발]
+  코더(Backend) + 코더(Frontend) + 테스터
+  -> 백엔드와 프론트엔드를 병렬 개발, 테스터가 동시에 테스트 작성
+
+[코드 품질 개선]
+  리서처 + 리팩토러 + 리뷰어
+  -> 리서처가 문제점 분석, 리팩토러가 개선, 리뷰어가 검증
+
+[기술 부채 해소]
+  리서처 + 코더 + 테스터 + 문서화
+  -> 분석 후 수정, 테스트 보강, 문서 업데이트
+
+[대규모 마이그레이션]
+  코더(타입) + 코더(변환) + 테스터
+  -> 타입 정의와 코드 변환을 병렬 처리, 테스터가 검증
+```
+
+### 효과적인 프롬프트로 역할 지정하기
+
+에이전트에게 명확한 역할을 부여하면 작업 품질이 향상됩니다.
+
+```bash
+# 역할을 명확히 지정한 프롬프트 예시
+claude "다음 작업을 Agent Team으로 처리해줘:
+
+에이전트 1 (백엔드 코더):
+- src/server/routes/ 에 새로운 /api/users 엔드포인트 구현
+- 입력 검증, 에러 핸들링 포함
+- 기존 미들웨어 패턴을 따를 것
+
+에이전트 2 (프론트엔드 코더):
+- src/client/components/UserList.tsx 컴포넌트 구현
+- React Query로 데이터 페칭
+- Tailwind CSS로 스타일링
+
+에이전트 3 (테스터):
+- 백엔드 API 테스트 (src/server/__tests__/)
+- 프론트엔드 컴포넌트 테스트 (src/client/__tests__/)
+- 각각 최소 3개의 테스트 케이스"
+```
+
+> **Tip: 에이전트 수는 적절히**
+> 에이전트를 너무 많이 생성하면 시스템 리소스가 부족해질 수 있습니다.
+> 일반적으로 3-5개의 에이전트가 최적입니다. 각 에이전트는 별도의
+> Claude API 호출을 사용하므로, API 사용량도 고려해야 합니다.
+
+---
+
+## 3.2 tmux 세션/윈도우/페인 구조 설계
+
+프로젝트 규모에 따라 tmux 구조를 다르게 설계합니다.
+
+### 소규모 (2-3 에이전트): 단일 윈도우, pane 분할
+
+```bash
+# 소규모 프로젝트 레이아웃
+tmux new-session -s small-project \; \
+  split-window -h \; \
+  split-window -v \; \
+  select-pane -t 0 \; \
+  select-layout main-vertical
+```
+
+```
+소규모 프로젝트 레이아웃 (단일 윈도우):
+
+┌──────────────────────┬─────────────────┐
+│                      │ Pane 1          │
+│ Pane 0               │ Agent 1         │
+│ Team Lead            │ (코더)           │
+│                      ├─────────────────┤
+│                      │ Pane 2          │
+│                      │ Agent 2         │
+│                      │ (테스터)         │
+└──────────────────────┴─────────────────┘
+```
+
+### 중규모 (4-6 에이전트): 다중 윈도우
+
+```bash
+#!/bin/bash
+SESSION="mid-project"
+
+# 세션 생성
+tmux new-session -d -s $SESSION -n "lead"
+
+# 윈도우별 역할 분배
+tmux new-window -t $SESSION -n "frontend"
+tmux new-window -t $SESSION -n "backend"
+tmux new-window -t $SESSION -n "testing"
+tmux new-window -t $SESSION -n "monitor"
+
+# 모니터링 윈도우 구성
+tmux select-window -t $SESSION:monitor
+tmux split-window -h
+tmux send-keys -t $SESSION:monitor.0 'htop' C-m
+tmux send-keys -t $SESSION:monitor.1 'watch -n 5 git log --oneline -10' C-m
+
+# 첫 번째 윈도우로 이동
+tmux select-window -t $SESSION:lead
+tmux attach -t $SESSION
+```
+
+```
+중규모 프로젝트 (다중 윈도우):
+
+Session: mid-project
+├─ Window 0: lead      [Team Lead]
+├─ Window 1: frontend  [프론트엔드 에이전트]
+├─ Window 2: backend   [백엔드 에이전트]
+├─ Window 3: testing   [테스트 에이전트]
+└─ Window 4: monitor   [시스템 모니터링]
+                        ├─ Pane 0: htop
+                        └─ Pane 1: git log
+
+윈도우 전환: Ctrl-b 0~4 또는 Ctrl-b n/p
+```
+
+### 대규모 (7+ 에이전트): 다중 세션 또는 세션 그룹
+
+```bash
+#!/bin/bash
+# 대규모 프로젝트: 기능별 세션 분리
+
+# 프론트엔드 세션
+tmux new-session -d -s "frontend" -n "lead"
+tmux new-window -t "frontend" -n "components"
+tmux new-window -t "frontend" -n "state"
+tmux new-window -t "frontend" -n "styles"
+
+# 백엔드 세션
+tmux new-session -d -s "backend" -n "lead"
+tmux new-window -t "backend" -n "api"
+tmux new-window -t "backend" -n "db"
+tmux new-window -t "backend" -n "auth"
+
+# 인프라 세션
+tmux new-session -d -s "infra" -n "monitor"
+tmux split-window -h -t "infra:monitor"
+tmux split-window -v -t "infra:monitor.1"
+
+# 세션 목록 확인
+tmux ls
+```
+
+### 역할별 pane 배치 패턴
+
+```
+패턴 1: 메인 + 보조                 패턴 2: 균등 분할
+┌────────────┬───────┐            ┌───────┬───────┐
+│            │ Agent │            │ Lead  │ Agent │
+│  Team Lead │  1    │            │       │  1    │
+│  (main)    ├───────┤            ├───────┼───────┤
+│            │ Agent │            │ Agent │ Agent │
+│            │  2    │            │  2    │  3    │
+└────────────┴───────┘            └───────┴───────┘
+
+패턴 3: 탑-다운                    패턴 4: L자형
+┌─────────────────────┐           ┌──────────┬──────┐
+│ Team Lead            │           │          │ Ag.1 │
+├──────────┬──────────┤           │  Lead    ├──────┤
+│ Agent 1  │ Agent 2  │           │          │ Ag.2 │
+├──────────┼──────────┤           ├──────────┼──────┤
+│ Agent 3  │ Monitor  │           │ Agent 3  │ Mon. │
+└──────────┴──────────┘           └──────────┴──────┘
+```
+
+> **Tip: 윈도우 전환을 활용한 에이전트 그룹 관리**
+> 에이전트가 많을 때는 역할별로 윈도우를 나누고 `Ctrl-b 숫자`로 빠르게 전환하세요.
+> 각 윈도우에 의미 있는 이름을 붙이면 (`Ctrl-b ,`) 상태바에서 역할을 바로 확인할 수 있습니다.
+
+---
+
+## 3.3 에이전트 간 작업 의존성 관리
+
+### 순차적 작업 vs 병렬 작업 구분
+
+Agent Team을 설계할 때 가장 중요한 것은 작업 간의 의존성을 파악하는 것입니다.
+
+```
+작업 의존성 판단:
+
+[병렬 가능 - 독립적인 작업]
+  ┌─────────┐  ┌─────────┐  ┌─────────┐
+  │ API 개발 │  │ UI 개발  │  │ 테스트   │
+  └─────────┘  └─────────┘  └─────────┘
+  서로 다른 파일/디렉토리에서 작업
+
+[순차 필요 - 의존적인 작업]
+  ┌─────────┐     ┌─────────┐     ┌─────────┐
+  │ DB 스키마│ ──> │ API 개발 │ ──> │ UI 연동  │
+  └─────────┘     └─────────┘     └─────────┘
+  이전 작업의 결과물이 다음 작업에 필요
+
+[혼합형]
+  ┌─────────┐
+  │ DB 스키마│ ──────────────────┐
+  └─────────┘                   │
+       │                        ▼
+       ▼                  ┌─────────┐
+  ┌─────────┐             │ 테스트   │
+  │ API 개발 │ ──────────> │ (통합)   │
+  └─────────┘             └─────────┘
+       │
+       ▼
+  ┌─────────┐
+  │ UI 개발  │ (API 인터페이스 정의 후 병렬 가능)
+  └─────────┘
+```
+
+### 작업 파이프라인 설계
+
+복잡한 프로젝트에서는 파이프라인 단계별로 에이전트를 배치합니다.
+
+```
+작업 파이프라인과 tmux 매핑:
+
+Stage 1       Stage 2       Stage 3       Stage 4
+[분석]    ──> [설계/구현] ──> [테스트]  ──> [리뷰]
+  │              │              │            │
+  ▼              ▼              ▼            ▼
+Agent-R        Agent-C        Agent-T      Agent-V
+리서처          코더            테스터        리뷰어
+
+tmux 구조:
+  Window 0: lead     - Team Lead (전체 조율)
+  Window 1: research - 리서처 에이전트 (Stage 1)
+  Window 2: code     - 코더 에이전트 (Stage 2)
+  Window 3: test     - 테스터 에이전트 (Stage 3)
+  Window 4: review   - 리뷰어 에이전트 (Stage 4)
+  Window 5: monitor  - 시스템 모니터링
+```
+
+### 의존성이 있는 작업의 실행 순서 관리
+
+프롬프트에서 작업 순서와 의존성을 명시적으로 지정합니다.
+
+```bash
+# 의존성을 명시한 프롬프트 예시
+claude "다음 작업을 순서대로 처리해줘:
+
+Phase 1 (병렬 처리):
+- 에이전트 A: 데이터베이스 스키마 설계 (src/db/schema.ts)
+- 에이전트 B: API 인터페이스 타입 정의 (src/types/api.ts)
+
+Phase 2 (Phase 1 완료 후, 병렬 처리):
+- 에이전트 C: 스키마를 기반으로 API 구현 (src/routes/)
+- 에이전트 D: 타입을 기반으로 프론트엔드 서비스 레이어 구현 (src/services/)
+
+Phase 3 (Phase 2 완료 후):
+- 에이전트 E: 전체 통합 테스트 작성 (tests/integration/)"
+```
+
+### 에이전트 간 결과 전달
+
+Agent Team의 에이전트들은 같은 파일 시스템을 공유하므로,
+한 에이전트가 생성한 파일을 다른 에이전트가 참조할 수 있습니다.
+
+```
+에이전트 간 결과 전달 방식:
+
+Agent A                  Agent B
+  │                        │
+  │ schema.ts 생성          │
+  │──────── 파일 시스템 ──────>│ schema.ts 읽기
+  │                        │
+  │                        │ API 구현
+  ▼                        ▼
+```
+
+> **Tip: 의존성 있는 작업은 순차적으로**
+> "백엔드 API를 먼저 만들고, 그 다음 프론트엔드에서 호출하기"처럼
+> 의존성이 있는 작업은 프롬프트에서 순서를 명시하세요. Agent Team이
+> 자동으로 의존성을 관리하지만, 명시적으로 지정하면 더 정확한 결과를 얻습니다.
+
+---
+
+## 3.4 효과적인 프롬프트 설계
+
+### Agent Team에 최적화된 프롬프트 구조
+
+좋은 프롬프트는 다음 요소를 포함합니다:
+
+```
+프롬프트 구조:
+
+1. [목표] 무엇을 달성할 것인가
+2. [역할] 각 에이전트의 담당 영역
+3. [범위] 수정할 파일/디렉토리
+4. [제약] 지켜야 할 규칙과 컨벤션
+5. [순서] 작업 간 의존성과 우선순위
+```
+
+### 좋은 프롬프트 vs 나쁜 프롬프트
+
+```bash
+# ---- 나쁜 프롬프트 (모호하고 범위가 넓음) ----
+claude "이 프로젝트를 개선해줘"
+# 문제: 범위가 불명확, 에이전트가 무엇을 할지 결정해야 함
+
+# ---- 보통 프롬프트 (방향은 있지만 구체성 부족) ----
+claude "이 프로젝트에 TypeScript를 적용해줘"
+# 문제: 어느 파일부터? 어떤 수준의 타입? 테스트는?
+
+# ---- 좋은 프롬프트 (역할과 범위가 명확) ----
+claude "이 프로젝트에서 다음 작업을 Agent Team으로 병렬 처리해줘:
+
+1. 타입 에이전트:
+   - src/types/ 디렉토리에 모든 인터페이스 정의
+   - 기존 JSDoc 타입 힌트를 참고할 것
+   - strict 모드 호환 타입만 사용
+
+2. 변환 에이전트:
+   - src/utils/ 디렉토리의 .js 파일을 .ts로 변환
+   - any 타입 사용 금지, 명시적 타입 지정
+   - 기존 테스트가 깨지지 않도록 주의
+
+3. 테스트 에이전트:
+   - 변환된 파일의 기존 테스트 업데이트
+   - 타입 관련 엣지 케이스 테스트 추가
+   - npx tsc --noEmit으로 타입 체크 통과 확인"
+```
+
+### 프롬프트 템플릿 모음
+
+#### 템플릿 1: 새 기능 개발
+
+```
+다음 기능을 Agent Team으로 구현해줘:
+
+## 기능: [기능명]
+## 설명: [기능에 대한 간단한 설명]
+
+### 백엔드 에이전트
+- [ ] DB 스키마/모델 추가
+- [ ] API 엔드포인트 구현
+- [ ] 입력 검증 및 에러 핸들링
+
+### 프론트엔드 에이전트
+- [ ] UI 컴포넌트 구현
+- [ ] API 연동 및 상태 관리
+- [ ] 반응형 디자인 적용
+
+### 테스트 에이전트
+- [ ] 백엔드 API 테스트
+- [ ] 프론트엔드 컴포넌트 테스트
+
+### 제약 조건
+- 기존 코딩 컨벤션 준수 (CLAUDE.md 참고)
+- TypeScript strict 모드
+- 에러 핸들링 필수
+```
+
+#### 템플릿 2: 리팩토링
+
+```
+다음 리팩토링 작업을 Agent Team으로 처리해줘:
+
+## 대상: [리팩토링 대상 설명]
+## 목표: [달성하려는 개선 사항]
+
+### 분석 에이전트
+- 현재 코드의 문제점 분석
+- 변경 영향 범위 파악
+- 리팩토링 계획 수립
+
+### 구현 에이전트
+- 리팩토링 실행 (대상: [디렉토리/파일])
+- 기존 인터페이스 유지
+- 단계별로 진행하여 중간 커밋 가능하도록
+
+### 검증 에이전트
+- 기존 테스트 통과 확인
+- 성능 회귀 테스트
+- 리팩토링 전후 비교 문서 작성
+
+### 주의 사항
+- 기존 기능이 깨지지 않도록 할 것
+- 한 번에 너무 많이 변경하지 말 것
+```
+
+#### 템플릿 3: 코드 리뷰 및 문서화
+
+```
+이 프로젝트의 코드 리뷰와 문서화를 Agent Team으로 진행해줘:
+
+### 리뷰 에이전트
+- src/ 디렉토리 전체 코드 품질 분석
+- 보안 취약점 점검
+- 성능 개선 포인트 식별
+- 결과를 REVIEW.md로 정리
+
+### 문서화 에이전트
+- 모든 public 함수에 JSDoc 주석 추가
+- 각 모듈의 목적과 사용법 문서화
+- API 엔드포인트 문서 (Swagger/OpenAPI)
+
+### README 에이전트
+- README.md 업데이트
+- 설치/실행 가이드 보강
+- 아키텍처 다이어그램 추가
+```
+
+---
+
+## 3.5 역할별 tmux 윈도우 구성 스크립트
+
+위의 전략들을 종합한 실용적인 셸 스크립트입니다.
+
+```bash
+#!/bin/bash
+# agent-team-setup.sh
+# 사용법: ./agent-team-setup.sh [프로젝트_디렉토리] [세션_이름]
+
+PROJECT_DIR="${1:-.}"
+SESSION="${2:-agent-team}"
+
+# 기존 세션이 있으면 알림
+if tmux has-session -t $SESSION 2>/dev/null; then
+  echo "세션 '$SESSION'이 이미 존재합니다."
+  echo "접속: tmux attach -t $SESSION"
+  echo "삭제 후 재생성: tmux kill-session -t $SESSION"
+  exit 1
+fi
+
+# 세션 생성 - Lead 윈도우
+tmux new-session -d -s $SESSION -n "lead" -c "$PROJECT_DIR"
+
+# 역할별 윈도우 생성
+tmux new-window -t $SESSION -n "coder" -c "$PROJECT_DIR"
+tmux new-window -t $SESSION -n "tester" -c "$PROJECT_DIR"
+tmux new-window -t $SESSION -n "reviewer" -c "$PROJECT_DIR"
+
+# 모니터링 윈도우 (3-pane 분할)
+tmux new-window -t $SESSION -n "monitor" -c "$PROJECT_DIR"
+tmux split-window -h -t $SESSION:monitor -c "$PROJECT_DIR"
+tmux split-window -v -t $SESSION:monitor.1 -c "$PROJECT_DIR"
+
+# 모니터링 명령어 설정
+tmux send-keys -t $SESSION:monitor.0 \
+  "watch -n 10 'git log --oneline -15'" C-m
+tmux send-keys -t $SESSION:monitor.1 \
+  "htop -t" C-m
+tmux send-keys -t $SESSION:monitor.2 \
+  "watch -n 5 'echo \"=== Disk ===\"; df -h . ; echo; echo \"=== Memory ===\"; free -h'" C-m
+
+# Lead 윈도우에서 시작
+tmux select-window -t $SESSION:lead
+tmux attach -t $SESSION
+```
+
+사용 방법:
+
+```bash
+# 스크립트에 실행 권한 부여
+chmod +x agent-team-setup.sh
+
+# 현재 디렉토리로 세션 생성
+./agent-team-setup.sh
+
+# 특정 프로젝트 디렉토리와 세션 이름 지정
+./agent-team-setup.sh ~/projects/my-app my-app-dev
+```
+
+---
+
+## 요약
+
+| 전략 | 핵심 포인트 |
+|------|------------|
+| **역할 분배** | 코더, 테스터, 리뷰어 등 명확한 역할 부여 |
+| **tmux 구조** | 프로젝트 규모에 맞는 세션/윈도우/pane 설계 |
+| **의존성 관리** | 병렬 가능한 작업과 순차 작업을 명확히 구분 |
+| **프롬프트 설계** | 목표, 역할, 범위, 제약, 순서를 명시 |
+| **스크립트 활용** | 반복 사용할 환경은 셸 스크립트로 자동화 |
+
+다음 장에서는 이 전략들을 실전 프로젝트 시나리오에 적용해 봅니다.

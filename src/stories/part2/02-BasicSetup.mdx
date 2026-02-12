@@ -1,0 +1,454 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="2부: Claude Code Agent Team/02. 기본 환경 설정" />
+
+# 기본 환경 설정
+
+이 장에서는 Claude Code를 설치하고 tmux와 함께 사용하는 기본 워크플로우를 구축합니다.
+첫 번째 Agent Team을 실행하고, 에이전트를 모니터링하는 기본 레이아웃을 설정해 봅니다.
+
+---
+
+## 2.1 Claude Code 설치 및 설정
+
+### 사전 요구사항
+
+Claude Code를 설치하기 전에 다음 환경이 준비되어 있어야 합니다:
+
+| 요구사항 | 최소 버전 | 확인 명령어 |
+|----------|----------|------------|
+| **Node.js** | 18.0 이상 | `node --version` |
+| **npm** | 8.0 이상 | `npm --version` |
+| **tmux** | 2.0 이상 | `tmux -V` |
+| **Git** | 2.0 이상 | `git --version` |
+
+### Node.js 설치 (아직 없다면)
+
+```bash
+# Ubuntu/Debian
+sudo apt update
+sudo apt install -y nodejs npm
+
+# 또는 nvm을 사용한 설치 (권장)
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+source ~/.bashrc
+nvm install --lts
+nvm use --lts
+
+# 설치 확인
+node --version   # v18.x.x 이상
+npm --version    # 8.x.x 이상
+```
+
+### Claude Code 설치
+
+```bash
+# Claude Code 전역 설치
+npm install -g @anthropic-ai/claude-code
+
+# 설치 확인
+claude --version
+
+# 도움말 확인
+claude --help
+```
+
+### 인증 설정
+
+Claude Code를 사용하려면 Anthropic API 키 또는 OAuth 인증이 필요합니다.
+
+```bash
+# 방법 1: 환경 변수로 API 키 설정
+export ANTHROPIC_API_KEY="sk-ant-xxxxx"
+
+# 영구 설정 (~/.bashrc 또는 ~/.zshrc에 추가)
+echo 'export ANTHROPIC_API_KEY="sk-ant-xxxxx"' >> ~/.bashrc
+source ~/.bashrc
+
+# 방법 2: 대화형 인증 (OAuth)
+claude auth
+
+# 인증 상태 확인
+claude "안녕, 잘 작동하는지 확인해줘"
+```
+
+### CLAUDE.md로 프로젝트 컨텍스트 설정
+
+프로젝트 루트에 `CLAUDE.md` 파일을 작성하면, Claude Code가 프로젝트의 컨텍스트를
+자동으로 이해합니다. Agent Team의 모든 에이전트가 이 파일을 참조합니다.
+
+```markdown
+# 프로젝트 컨텍스트
+
+이 프로젝트는 React + Express 기반 웹 애플리케이션입니다.
+
+## 기술 스택
+- 프론트엔드: React 18, TypeScript, Tailwind CSS
+- 백엔드: Express.js, PostgreSQL
+- 테스트: Jest, React Testing Library
+
+## 프로젝트 구조
+- src/client/ - React 프론트엔드
+- src/server/ - Express 백엔드
+- src/shared/ - 공유 타입 및 유틸리티
+
+## 코딩 컨벤션
+- TypeScript strict 모드 사용
+- 함수형 컴포넌트 + hooks 패턴
+- ESLint + Prettier 설정 준수
+- 커밋 메시지: Conventional Commits 형식
+
+## 빌드 및 테스트
+- npm run dev: 개발 서버 시작
+- npm test: 테스트 실행
+- npm run build: 프로덕션 빌드
+```
+
+> **Tip: CLAUDE.md로 에이전트 품질 높이기**
+> CLAUDE.md에 코딩 컨벤션, 기술 스택, 프로젝트 구조를 명시해 두면
+> Agent Team의 모든 에이전트가 일관된 스타일로 코드를 작성합니다.
+> 특히 "하지 말아야 할 것"을 명시하면 에이전트의 실수를 줄일 수 있습니다.
+> 예: "CSS-in-JS 대신 반드시 Tailwind CSS 클래스를 사용할 것"
+
+---
+
+## 2.2 tmux + Claude Code 기본 워크플로우
+
+### tmux 세션에서 Claude Code 실행하기
+
+가장 기본적인 워크플로우는 tmux 세션 안에서 Claude Code를 실행하는 것입니다.
+
+```bash
+# 1. tmux 세션 생성
+tmux new-session -s claude-dev
+
+# 2. Claude Code 실행
+claude
+
+# 3. 대화형 모드에서 작업 시작
+# > 이 프로젝트의 구조를 분석해줘
+```
+
+### 기본 화면 분할: 에이전트 + 터미널
+
+에이전트가 작업하는 동안 다른 터미널에서 빌드, 테스트 등을 확인할 수 있도록
+화면을 분할합니다.
+
+```bash
+# tmux 세션에서 화면 분할하기
+# 세로 분할: Ctrl-b %
+# 가로 분할: Ctrl-b "
+
+# 왼쪽 pane: Claude Code 실행
+# 오른쪽 pane: 일반 터미널 (빌드/테스트/Git)
+```
+
+```
+기본 2-pane 레이아웃:
+
+┌─ tmux session: claude-dev ──────────────────┐
+│                                              │
+│  ┌─ Pane 0 ──────────┬─ Pane 1 ───────────┐ │
+│  │                    │                     │ │
+│  │  $ claude          │  $ git status       │ │
+│  │                    │  $ npm test         │ │
+│  │  Claude Code       │  일반 터미널         │ │
+│  │  대화형 세션        │  (빌드/테스트/Git)   │ │
+│  │                    │                     │ │
+│  └────────────────────┴─────────────────────┘ │
+│                                              │
+│  Status bar: [claude-dev] 0:bash             │
+└──────────────────────────────────────────────┘
+```
+
+### 에이전트 백그라운드 실행
+
+tmux의 핵심 장점 중 하나는 세션을 분리(detach)하여 에이전트를 백그라운드에서
+실행할 수 있다는 것입니다.
+
+```bash
+# 에이전트 실행 중에 세션 분리
+# Ctrl-b d
+
+# 다른 작업 수행...
+
+# 나중에 세션에 다시 접속
+tmux attach -t claude-dev
+
+# 세션 목록 확인
+tmux ls
+```
+
+> **Tip: tmux 세션 네이밍 컨벤션**
+> 프로젝트별로 세션 이름을 정해두면 관리가 편합니다.
+> 여러 프로젝트를 동시에 진행할 때 `tmux ls`로 세션 목록을 확인하고
+> `tmux attach -t project-name`으로 빠르게 전환할 수 있습니다.
+> 예: `tmux new -s myapp-dev`, `tmux new -s api-refactor`
+
+---
+
+## 2.3 첫 번째 Agent Team 실행해보기
+
+### 간단한 Agent Team 작업 요청
+
+Agent Team은 복잡한 작업을 요청할 때 자동으로 활성화됩니다.
+여러 부분으로 나눌 수 있는 작업을 요청하면 Team Lead가 Sub-agent를 생성합니다.
+
+```bash
+# tmux 세션에서 Claude Code 실행
+tmux new-session -s my-first-team
+claude
+
+# Agent Team을 유도하는 프롬프트 예시:
+# > 이 프로젝트에서 다음 작업을 병렬로 처리해줘:
+# > 1. src/utils/ 디렉토리의 모든 함수에 JSDoc 주석 추가
+# > 2. 각 유틸리티 함수에 대한 단위 테스트 작성
+# > 3. README.md에 유틸리티 함수 문서 추가
+```
+
+### Team Lead가 Sub-agent를 생성하는 과정
+
+작업을 요청하면 Claude Code는 다음과 같은 과정을 거칩니다:
+
+```
+Agent Team 실행 흐름:
+
+사용자 요청 입력
+       │
+       ▼
+┌──────────────────┐
+│ Team Lead가       │
+│ 작업을 분석        │
+│ "3개의 독립적인    │
+│  작업으로 분리"    │
+└────────┬─────────┘
+         │
+    ┌────┼────┐
+    │    │    │
+    ▼    ▼    ▼
+  Task  Task  Task
+  #1    #2    #3
+    │    │    │
+    ▼    ▼    ▼
+  Agent Agent Agent
+  생성   생성   생성
+    │    │    │
+    ▼    ▼    ▼
+  병렬로 작업 수행
+    │    │    │
+    └────┼────┘
+         │
+         ▼
+  Team Lead가
+  결과 통합 & 보고
+```
+
+터미널에서 이 과정을 관찰하면 다음과 같은 출력을 볼 수 있습니다:
+
+```
+Team Lead: 작업을 분석하고 있습니다...
+Team Lead: 3개의 sub-agent를 생성합니다.
+  - Agent 1: JSDoc 주석 추가 (src/utils/)
+  - Agent 2: 단위 테스트 작성
+  - Agent 3: README 문서 업데이트
+
+[Agent 1] src/utils/string.ts에 JSDoc 주석 추가 중...
+[Agent 2] tests/utils/string.test.ts 생성 중...
+[Agent 3] README.md 업데이트 중...
+```
+
+### 작업 상태 확인
+
+Agent Team이 실행되는 동안, 별도의 tmux pane에서 작업 결과를 확인할 수 있습니다.
+
+```bash
+# 별도 pane에서 파일 변경 사항 모니터링
+watch -n 5 'git diff --stat'
+
+# 또는 특정 디렉토리의 변경 추적
+watch -n 3 'ls -la src/utils/'
+
+# 테스트 자동 실행
+npm test -- --watch
+```
+
+---
+
+## 2.4 기본 tmux 레이아웃으로 에이전트 모니터링
+
+Agent Team을 효과적으로 모니터링하기 위한 기본 레이아웃 패턴을 소개합니다.
+
+### 레이아웃 1: 2-pane (Team Lead + 터미널)
+
+가장 간단한 레이아웃으로, Team Lead의 출력을 보면서 터미널에서 결과를 확인합니다.
+
+```bash
+# 2-pane 레이아웃 설정
+tmux new-session -s claude-dev \; \
+  split-window -h \; \
+  select-pane -t 0
+```
+
+```
+┌──────────────────┬──────────────────┐
+│ Pane 0           │ Pane 1           │
+│                  │                  │
+│ $ claude         │ $ git status     │
+│ (Team Lead)      │ $ npm test       │
+│                  │ (결과 확인)       │
+└──────────────────┴──────────────────┘
+```
+
+### 레이아웃 2: 3-pane (Team Lead + Agent + 터미널)
+
+Team Lead와 핵심 에이전트의 작업을 동시에 관찰하고, 별도 터미널에서 결과를 확인합니다.
+
+```bash
+# 3-pane 레이아웃 설정
+tmux new-session -s claude-dev \; \
+  split-window -h \; \
+  split-window -v \; \
+  select-pane -t 0
+```
+
+```
+┌──────────────────┬──────────────────┐
+│ Pane 0           │ Pane 1           │
+│                  │                  │
+│ $ claude         │ Agent 작업 관찰   │
+│ (Team Lead)      │                  │
+│                  ├──────────────────┤
+│                  │ Pane 2           │
+│                  │                  │
+│                  │ $ npm test       │
+│                  │ (터미널)          │
+└──────────────────┴──────────────────┘
+```
+
+### 레이아웃 3: 4-pane 균등 분할 (다중 에이전트 모니터링)
+
+여러 에이전트의 작업을 동시에 모니터링하는 가장 일반적인 레이아웃입니다.
+
+```bash
+# 4-pane 균등 분할 레이아웃
+tmux new-session -s agent-team \; \
+  split-window -h \; \
+  split-window -v \; \
+  select-pane -t 0 \; \
+  split-window -v \; \
+  select-layout tiled
+```
+
+```
+Agent Team 기본 모니터링 레이아웃:
+
+┌─ tmux session: agent-team ──────────────────┐
+│                                              │
+│  ┌─ Pane 0 ──────────┬─ Pane 1 ───────────┐ │
+│  │ Team Lead          │ Sub-Agent 1        │ │
+│  │ (작업 분배 중...)    │ (코드 작성 중...)    │ │
+│  ├────────────────────┼─────────────────────┤ │
+│  │ Pane 2             │ Pane 3             │ │
+│  │ Sub-Agent 2        │ 터미널 (모니터링)    │ │
+│  │ (테스트 작성 중...)  │ $ htop / git log   │ │
+│  └────────────────────┴─────────────────────┘ │
+│                                              │
+└──────────────────────────────────────────────┘
+```
+
+### 레이아웃 전환 단축키
+
+tmux에는 미리 정의된 레이아웃을 빠르게 전환하는 기능이 있습니다:
+
+| 단축키 | 레이아웃 | 설명 |
+|--------|---------|------|
+| `Ctrl-b Space` | 순환 | 미리 정의된 레이아웃 순환 |
+| `Ctrl-b Alt-1` | even-horizontal | 모든 pane 가로 균등 분할 |
+| `Ctrl-b Alt-2` | even-vertical | 모든 pane 세로 균등 분할 |
+| `Ctrl-b Alt-3` | main-horizontal | 상단 메인 + 하단 분할 |
+| `Ctrl-b Alt-4` | main-vertical | 좌측 메인 + 우측 분할 |
+| `Ctrl-b Alt-5` | tiled | 타일형 균등 분할 |
+
+### pane 확대/축소 활용
+
+특정 에이전트의 출력을 자세히 보고 싶을 때 `Ctrl-b z`로 해당 pane을 전체 화면으로
+확대할 수 있습니다. 다시 `Ctrl-b z`를 누르면 원래 레이아웃으로 복귀합니다.
+
+```bash
+# 특정 pane으로 이동 후 확대
+# Ctrl-b 방향키  -> 원하는 pane으로 이동
+# Ctrl-b z       -> 전체 화면 토글
+
+# 이 기능은 에이전트가 긴 코드를 출력할 때 특히 유용합니다
+```
+
+---
+
+## 따라해보기: 첫 Agent Team 체험
+
+아래 단계를 따라 첫 번째 Agent Team을 직접 실행해 봅니다.
+
+### Step 1: tmux 세션 생성
+
+```bash
+tmux new-session -s first-agent-team
+```
+
+### Step 2: 화면 분할
+
+```bash
+# 세로 분할 (Ctrl-b %)
+# 왼쪽 pane: Claude Code용
+# 오른쪽 pane: 모니터링용
+```
+
+### Step 3: 왼쪽 pane에서 Claude Code 실행
+
+```bash
+claude
+```
+
+### Step 4: Agent Team 작업 요청
+
+Claude Code 대화형 모드에서 다음과 같이 입력합니다:
+
+```
+이 프로젝트를 분석하고 다음 작업을 병렬로 처리해줘:
+1. 프로젝트 구조 분석 및 요약
+2. 개선 가능한 포인트 목록 작성
+```
+
+### Step 5: 오른쪽 pane에서 모니터링
+
+```bash
+# Ctrl-b 오른쪽 화살표로 오른쪽 pane으로 이동
+
+# 파일 변경 사항 실시간 확인
+watch -n 3 'git status -s'
+```
+
+### Step 6: 결과 확인 후 세션 정리
+
+```bash
+# 작업 완료 후 세션 종료
+# Ctrl-b d  (세션 분리)
+# 또는 exit (세션 종료)
+```
+
+---
+
+## 요약
+
+이 장에서 설정한 기본 환경을 정리합니다:
+
+| 단계 | 내용 | 명령어 |
+|------|------|--------|
+| 설치 | Claude Code 설치 | `npm install -g @anthropic-ai/claude-code` |
+| 인증 | API 키 설정 | `export ANTHROPIC_API_KEY="..."` |
+| 컨텍스트 | CLAUDE.md 작성 | 프로젝트 루트에 파일 생성 |
+| 세션 | tmux 세션 생성 | `tmux new -s claude-dev` |
+| 레이아웃 | 화면 분할 | `Ctrl-b %` / `Ctrl-b "` |
+| 실행 | Claude Code 시작 | `claude` |
+| 모니터링 | pane 전환 | `Ctrl-b 방향키` |
+
+다음 장에서는 Agent Team을 효과적으로 운영하기 위한 전략을 살펴봅니다.

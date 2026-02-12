@@ -1,0 +1,455 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="2부: Claude Code Agent Team/04. 실전 프로젝트 시나리오" />
+
+# 실전 프로젝트 시나리오
+
+이 장에서는 Agent Team 운영 전략을 실제 프로젝트에 적용하는 세 가지 시나리오를 다룹니다.
+각 시나리오는 tmux 레이아웃 설정, 프롬프트 작성, 모니터링 방법, 결과 확인까지
+처음부터 끝까지의 워크플로우를 안내합니다.
+
+---
+
+## 4.1 시나리오 1: 풀스택 웹앱 개발
+
+### 상황 설명
+
+React + Express 기반 TODO 앱에 **태그(Tag) 기능**을 추가합니다.
+백엔드 API, 프론트엔드 UI, 테스트 코드를 동시에 개발합니다.
+
+### 에이전트 구성
+
+| 에이전트 | 역할 | 작업 범위 |
+|----------|------|----------|
+| Agent 1 | 백엔드 개발 | `src/server/` - API, DB 스키마 |
+| Agent 2 | 프론트엔드 개발 | `src/client/` - React 컴포넌트 |
+| Agent 3 | 테스트 작성 | `tests/` - Jest 테스트 |
+
+### Step 1: tmux 레이아웃 설정
+
+```bash
+#!/bin/bash
+# fullstack-todo-setup.sh
+SESSION="fullstack-todo"
+
+tmux new-session -d -s $SESSION -n "lead"
+
+# Lead 윈도우 - Team Lead 에이전트
+tmux send-keys -t $SESSION:lead "claude" C-m
+
+# Backend 윈도우
+tmux new-window -t $SESSION -n "backend"
+
+# Frontend 윈도우
+tmux new-window -t $SESSION -n "frontend"
+
+# Testing 윈도우 - 좌우 분할 (테스트 에이전트 + 테스트 실행)
+tmux new-window -t $SESSION -n "testing"
+tmux split-window -h -t $SESSION:testing
+tmux send-keys -t $SESSION:testing.1 "npm test -- --watch" C-m
+
+# Monitor 윈도우
+tmux new-window -t $SESSION -n "monitor"
+tmux split-window -h -t $SESSION:monitor
+tmux split-window -v -t $SESSION:monitor.1
+tmux send-keys -t $SESSION:monitor.0 \
+  "watch -n 10 'git diff --stat'" C-m
+tmux send-keys -t $SESSION:monitor.1 "htop" C-m
+tmux send-keys -t $SESSION:monitor.2 \
+  "watch -n 5 'git status --short'" C-m
+
+tmux select-window -t $SESSION:lead
+tmux attach -t $SESSION
+```
+
+```
+시나리오 1 - 풀스택 개발 tmux 구성:
+
+Session: fullstack-todo
+├─ Window 0: lead
+│  └─ [Team Lead Claude Code 세션]
+│
+├─ Window 1: backend
+│  └─ [백엔드 에이전트 - API 개발]
+│
+├─ Window 2: frontend
+│  └─ [프론트엔드 에이전트 - UI 개발]
+│
+├─ Window 3: testing
+│  ├─ Pane 0: [테스트 에이전트]
+│  └─ Pane 1: [npm test --watch 실행 중]
+│
+└─ Window 4: monitor
+   ├─ Pane 0: [git diff 변경 추적]
+   ├─ Pane 1: [htop 리소스 모니터]
+   └─ Pane 2: [git status 파일 상태]
+```
+
+### Step 2: Team Lead에게 작업 지시
+
+Claude Code 대화형 모드에서 다음 프롬프트를 입력합니다:
+
+```
+이 TODO 앱 프로젝트에 '태그 기능'을 추가해줘.
+Agent Team으로 병렬 작업해줘:
+
+1. 백엔드 에이전트:
+   - tags 테이블 스키마 추가 (PostgreSQL)
+   - /api/tags CRUD 엔드포인트 구현
+   - todo-tag 관계 테이블 및 API 구현
+   - 입력 검증, 에러 핸들링 포함
+
+2. 프론트엔드 에이전트:
+   - TagSelector 컴포넌트 생성
+   - TodoItem에 태그 표시 기능 추가
+   - 태그별 필터링 UI 구현
+   - Tailwind CSS로 스타일링
+
+3. 테스트 에이전트:
+   - 백엔드 API 통합 테스트
+   - 프론트엔드 컴포넌트 단위 테스트
+   - 각 테스트 최소 3개 케이스
+
+제약 조건:
+- TypeScript strict 모드
+- 기존 코딩 컨벤션 준수
+- 에러 핸들링 필수
+```
+
+### Step 3: 에이전트 모니터링
+
+에이전트들이 작업을 시작하면 각 윈도우를 전환하며 진행 상황을 확인합니다.
+
+```bash
+# 윈도우 전환하며 진행 상황 확인
+# Ctrl-b 0  -> Team Lead (작업 분배/진행 상황)
+# Ctrl-b 1  -> Backend (API 개발 진행)
+# Ctrl-b 2  -> Frontend (UI 개발 진행)
+# Ctrl-b 3  -> Testing (테스트 작성 + 테스트 실행 결과)
+# Ctrl-b 4  -> Monitor (전체 변경사항 추적)
+```
+
+### Step 4: 결과 확인 및 통합
+
+```bash
+# 모든 에이전트 작업 완료 후
+# Monitor 윈도우에서 전체 변경사항 확인
+git diff --stat
+
+# 테스트 통과 확인
+npm test
+
+# TypeScript 타입 체크
+npx tsc --noEmit
+
+# 변경사항 커밋
+git add -A
+git commit -m "feat: 태그 기능 추가 (Agent Team)"
+```
+
+> **Tip: 파일 충돌 방지**
+> 여러 에이전트가 동시에 같은 파일을 수정하면 충돌이 발생할 수 있습니다.
+> 작업 범위를 디렉토리나 파일 단위로 명확히 분리하고,
+> 공유 파일(예: 라우터 설정, 타입 정의)은 하나의 에이전트만 수정하도록 지정하세요.
+
+---
+
+## 4.2 시나리오 2: 대규모 리팩토링 프로젝트
+
+### 상황 설명
+
+JavaScript 프로젝트를 **TypeScript로 마이그레이션**합니다.
+타입 정의, 파일 변환, 테스트 업데이트를 병렬로 진행합니다.
+
+### 에이전트 구성
+
+| 에이전트 | 역할 | 작업 범위 |
+|----------|------|----------|
+| Agent 1 | 타입 정의 | `src/types/` - 인터페이스, 타입 |
+| Agent 2 | 파일 변환 | `src/` - .js를 .ts로 변환 |
+| Agent 3 | 테스트 업데이트 | `tests/` - 테스트 파일 수정 |
+
+### Step 1: 마이그레이션 대시보드 tmux 구성
+
+```bash
+#!/bin/bash
+# ts-migration-setup.sh
+SESSION="ts-migration"
+
+tmux new-session -d -s $SESSION -n "lead"
+tmux send-keys -t $SESSION:lead "claude" C-m
+
+# 작업 윈도우들
+tmux new-window -t $SESSION -n "types"
+tmux new-window -t $SESSION -n "convert"
+tmux new-window -t $SESSION -n "tests"
+
+# 마이그레이션 대시보드 윈도우
+tmux new-window -t $SESSION -n "dashboard"
+tmux split-window -h -t $SESSION:dashboard
+tmux split-window -v -t $SESSION:dashboard.0
+tmux split-window -v -t $SESSION:dashboard.1
+
+# 대시보드 모니터링 명령어
+tmux send-keys -t $SESSION:dashboard.0 \
+  "watch -n 5 'echo \"=== Migration Progress ===\"; echo \"JS files: \$(find src -name \"*.js\" 2>/dev/null | wc -l)\"; echo \"TS files: \$(find src -name \"*.ts\" -o -name \"*.tsx\" 2>/dev/null | wc -l)\"'" C-m
+tmux send-keys -t $SESSION:dashboard.1 \
+  "npx tsc --watch --noEmit" C-m
+tmux send-keys -t $SESSION:dashboard.2 \
+  "watch -n 10 'git diff --stat'" C-m
+tmux send-keys -t $SESSION:dashboard.3 \
+  "watch -n 10 'git log --oneline -10'" C-m
+
+tmux select-window -t $SESSION:lead
+tmux attach -t $SESSION
+```
+
+```
+시나리오 2 - 리팩토링 진행 대시보드:
+
+┌─────────────────────────────────────────────┐
+│ Window: dashboard                            │
+├──────────────────────┬──────────────────────┤
+│ Migration Progress   │ TypeScript Compiler  │
+│                      │                      │
+│ JS files: 45 -> 32   │ $ npx tsc --watch    │
+│ TS files:  0 -> 13   │                      │
+│ Progress: ████░ 29%  │ Errors: 12 -> 8 -> 3 │
+│                      │                      │
+├──────────────────────┼──────────────────────┤
+│ Git Changes          │ Git Log              │
+│                      │                      │
+│ $ watch git diff     │ abc1234 types: User  │
+│   --stat             │ def5678 convert: api │
+│ 13 files changed     │ ghi9012 test: auth   │
+└──────────────────────┴──────────────────────┘
+```
+
+### Step 2: 마이그레이션 프롬프트
+
+```
+이 JavaScript 프로젝트를 TypeScript로 마이그레이션해줘.
+Agent Team으로 다음과 같이 병렬 처리:
+
+에이전트 1 (타입 정의):
+- src/types/ 디렉토리에 프로젝트 전체 인터페이스 정의
+- 기존 JSDoc 주석과 런타임 패턴을 분석하여 타입 추출
+- 제네릭 타입, 유니온 타입 적극 활용
+- strict 모드 호환
+
+에이전트 2 (파일 변환):
+- src/ 하위 .js 파일을 .ts로 변환 (우선순위: utils -> services -> routes)
+- any 타입 사용 최소화, 가능한 구체적 타입 사용
+- CommonJS require를 ES Module import로 변환
+- 에이전트 1이 만든 타입 파일 참조
+
+에이전트 3 (테스트 업데이트):
+- tests/ 하위 테스트 파일 .ts로 변환
+- 타입 관련 테스트 케이스 추가
+- npx tsc --noEmit 통과 확인
+
+주의사항:
+- tsconfig.json이 이미 있으면 활용, 없으면 생성
+- 점진적 마이그레이션 (allowJs: true)
+- 기존 기능이 깨지지 않도록 주의
+```
+
+### Step 3: 진행 상황 모니터링
+
+```bash
+# dashboard 윈도우(Ctrl-b 4)에서 실시간 확인 가능한 정보:
+# - JS/TS 파일 수 변화 (마이그레이션 진행률)
+# - TypeScript 컴파일 에러 수 변화
+# - Git 변경 파일 목록
+# - 최근 에이전트 활동 (git log)
+
+# 특정 에이전트 확인이 필요하면 해당 윈도우로 전환
+# Ctrl-b 1  -> types (타입 정의 에이전트)
+# Ctrl-b 2  -> convert (파일 변환 에이전트)
+# Ctrl-b 3  -> tests (테스트 에이전트)
+```
+
+> **Tip: 실시간 빌드 모니터링**
+> 별도의 tmux pane에서 `npx tsc --watch`를 실행해두면, 에이전트가 코드를
+> 수정할 때마다 타입 에러가 몇 개인지 실시간으로 확인할 수 있습니다.
+> 에러가 증가하면 해당 에이전트에게 빠르게 피드백할 수 있습니다.
+
+---
+
+## 4.3 시나리오 3: 코드 리뷰 & 문서화 자동화
+
+### 상황 설명
+
+레거시 코드베이스에 대한 **코드 리뷰와 문서화**를 수행합니다.
+코드 품질 분석, JSDoc 주석 추가, API 문서 생성을 동시에 진행합니다.
+
+### 에이전트 구성
+
+| 에이전트 | 역할 | 작업 성격 |
+|----------|------|----------|
+| Agent 1 | 코드 품질 분석 | 읽기 중심 (분석 & 보고) |
+| Agent 2 | JSDoc/TSDoc 추가 | 쓰기 (코드 주석 추가) |
+| Agent 3 | README/API 문서 생성 | 쓰기 (문서 파일 생성) |
+
+### Step 1: 문서화 프로젝트 tmux 구성
+
+```bash
+#!/bin/bash
+# documentation-setup.sh
+SESSION="doc-project"
+
+tmux new-session -d -s $SESSION -n "lead"
+tmux send-keys -t $SESSION:lead "claude" C-m
+
+# 분석 윈도우
+tmux new-window -t $SESSION -n "analysis"
+
+# 문서화 윈도우
+tmux new-window -t $SESSION -n "docs"
+
+# 모니터링 윈도우
+tmux new-window -t $SESSION -n "monitor"
+tmux split-window -h -t $SESSION:monitor
+tmux send-keys -t $SESSION:monitor.0 \
+  "watch -n 5 'git diff --stat'" C-m
+tmux send-keys -t $SESSION:monitor.1 \
+  "watch -n 5 'git status --short'" C-m
+
+tmux select-window -t $SESSION:lead
+tmux attach -t $SESSION
+```
+
+### Step 2: 코드 리뷰 & 문서화 프롬프트
+
+```
+이 레거시 코드베이스를 분석하고 문서화해줘.
+Agent Team으로 병렬 처리:
+
+에이전트 1 (코드 리뷰어):
+- src/ 디렉토리 전체 코드 품질 분석
+- 보안 취약점 점검 (SQL Injection, XSS 등)
+- 성능 개선 포인트 식별
+- 중복 코드 식별
+- 결과를 REVIEW.md 파일로 정리
+  (심각도별 분류: Critical, Warning, Info)
+
+에이전트 2 (코드 문서화):
+- src/ 하위 모든 export 함수에 JSDoc 주석 추가
+- 함수 설명, @param, @returns, @throws, @example 포함
+- 복잡한 로직에는 인라인 주석 추가
+- 기존 코드 동작을 변경하지 말 것
+
+에이전트 3 (프로젝트 문서):
+- README.md 업데이트 (설치, 실행, 아키텍처)
+- API 엔드포인트 문서 생성 (docs/API.md)
+- 프로젝트 구조 설명 (docs/ARCHITECTURE.md)
+- 기여 가이드 (CONTRIBUTING.md)
+```
+
+### Step 3: 읽기 전용 vs 쓰기 에이전트 관리
+
+이 시나리오에서는 에이전트의 작업 성격이 다릅니다:
+
+```
+에이전트별 작업 성격:
+
+Agent 1 (리뷰어):
+  ┌──────────┐     ┌──────────┐
+  │ src/ 읽기 │ ──> │REVIEW.md │  읽기 중심, 보고서만 작성
+  └──────────┘     │ 작성     │
+                   └──────────┘
+
+Agent 2 (문서화):
+  ┌──────────┐     ┌──────────┐
+  │ src/ 읽기 │ ──> │ src/ 수정 │  기존 파일에 주석 추가
+  └──────────┘     │(주석만)   │
+                   └──────────┘
+
+Agent 3 (프로젝트 문서):
+  ┌──────────┐     ┌──────────┐
+  │ 프로젝트   │ ──> │ docs/    │  새 문서 파일 생성
+  │ 분석      │     │ 생성     │
+  └──────────┘     └──────────┘
+
+충돌 가능 영역: 없음 (각자 다른 파일 수정)
+```
+
+### Step 4: 분석 결과 전달
+
+Agent 1(리뷰어)의 분석 결과를 Agent 2, 3이 참고하도록 할 수 있습니다.
+
+```
+프롬프트에 순서 지정:
+
+Phase 1: 에이전트 1이 코드를 분석하고 REVIEW.md 작성
+Phase 2: 에이전트 2가 REVIEW.md를 참고하여 우선순위 높은 함수부터 문서화
+         에이전트 3이 분석 결과를 반영하여 프로젝트 문서 작성
+```
+
+### Step 5: 결과물 검증
+
+```bash
+# 리뷰 결과 확인
+cat REVIEW.md
+
+# JSDoc 주석이 올바르게 추가되었는지 확인
+# IDE에서 함수에 hover하면 JSDoc이 표시됨
+
+# 문서 파일 확인
+ls docs/
+# API.md  ARCHITECTURE.md
+
+cat docs/API.md
+
+# 문서가 올바른 마크다운인지 확인
+# (마크다운 린터가 있다면)
+npx markdownlint README.md docs/*.md
+```
+
+> **Tip: Git 브랜치 전략**
+> Agent Team 작업 시 각 에이전트별로 별도 브랜치를 사용하는 것을 권장합니다.
+> 작업 완료 후 Team Lead가 merge하는 방식으로 충돌을 최소화할 수 있습니다.
+> 프롬프트에서 브랜치 전략을 명시하세요:
+> "각 에이전트는 feature/agent-N 브랜치에서 작업하고, 완료 후 main에 머지해줘"
+
+---
+
+## 시나리오 비교 정리
+
+| 항목 | 풀스택 개발 | 대규모 리팩토링 | 코드 리뷰 & 문서화 |
+|------|------------|----------------|-------------------|
+| **에이전트 수** | 3개 | 3개 | 3개 |
+| **작업 성격** | 모두 쓰기 | 모두 쓰기 | 읽기 + 쓰기 혼합 |
+| **의존성** | 낮음 (디렉토리 분리) | 중간 (타입 의존) | 중간 (분석 우선) |
+| **충돌 위험** | 중간 | 높음 | 낮음 |
+| **tmux 구성** | 5 윈도우 | 5 윈도우 + 대시보드 | 4 윈도우 |
+| **모니터링 중점** | git diff, 테스트 | 타입 에러, 파일 수 | 문서 파일 생성 |
+
+---
+
+## 시나리오 적용 시 공통 체크리스트
+
+각 시나리오를 적용할 때 다음 사항을 확인하세요:
+
+```
+시작 전:
+  [ ] CLAUDE.md가 프로젝트 루트에 있는가?
+  [ ] tmux 세션이 준비되었는가?
+  [ ] Git 작업 브랜치가 생성되었는가?
+  [ ] 에이전트별 작업 범위가 겹치지 않는가?
+
+실행 중:
+  [ ] 모니터링 pane에서 진행 상황을 확인하고 있는가?
+  [ ] 파일 충돌이 발생하지 않는가? (git status 확인)
+  [ ] 에러가 발생한 에이전트는 없는가?
+  [ ] 시스템 리소스(CPU, 메모리)는 충분한가?
+
+완료 후:
+  [ ] 모든 테스트가 통과하는가?
+  [ ] TypeScript 타입 체크가 통과하는가?
+  [ ] 변경사항이 기대한 대로인가? (git diff 확인)
+  [ ] 불필요한 파일이 생성되지 않았는가?
+  [ ] 커밋 메시지가 적절한가?
+```
+
+다음 장에서는 고급 팁과 트러블슈팅 방법을 다룹니다.

@@ -1,0 +1,19 @@
+{
+  "name": "dsdevrel-tmux_guide",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
+  },
+  "description": "tmux 완벽 가이드 - 터미널 멀티플렉서 tmux와 Claude Code Agent Team 활용법",
+  "license": "ISC",
+  "devDependencies": {
+    "@storybook/addon-a11y": "^10.2.8",
+    "@storybook/addon-docs": "^10.2.8",
+    "@storybook/react-vite": "^10.2.8",
+    "storybook": "^10.2.8",
+    "typescript": "^5.9.3"
+  }
+}

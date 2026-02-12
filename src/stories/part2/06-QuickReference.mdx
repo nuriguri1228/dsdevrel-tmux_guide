@@ -1,0 +1,314 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="2부: Claude Code Agent Team/06. 빠른 참조 카드" />
+
+# 빠른 참조 카드
+
+Agent Team 운영에 필요한 명령어, 프롬프트 템플릿, 트러블슈팅 체크리스트를 한곳에 모았습니다.
+이 페이지를 북마크해두고 작업 중 빠르게 참조하세요.
+
+---
+
+## A.1 tmux + Agent Team 핵심 명령어 모음
+
+### 세션 관리
+
+| 작업 | 명령어 | 단축키 |
+|------|--------|--------|
+| 세션 생성 | `tmux new -s agent-team` | - |
+| 세션 분리 | - | `Ctrl-b d` |
+| 세션 재접속 | `tmux attach -t agent-team` | - |
+| 세션 목록 | `tmux ls` | - |
+| 세션 종료 | `tmux kill-session -t agent-team` | - |
+| 세션 전환 | `tmux switch-client -t [세션명]` | `Ctrl-b s` |
+
+### 윈도우 관리
+
+| 작업 | 명령어 | 단축키 |
+|------|--------|--------|
+| 윈도우 생성 | - | `Ctrl-b c` |
+| 윈도우 전환 (번호) | - | `Ctrl-b [0-9]` |
+| 다음 윈도우 | - | `Ctrl-b n` |
+| 이전 윈도우 | - | `Ctrl-b p` |
+| 윈도우 이름 변경 | - | `Ctrl-b ,` |
+| 윈도우 목록 | - | `Ctrl-b w` |
+
+### Pane 관리
+
+| 작업 | 명령어 | 단축키 |
+|------|--------|--------|
+| 세로 분할 | - | `Ctrl-b %` |
+| 가로 분할 | - | `Ctrl-b "` |
+| pane 이동 | - | `Ctrl-b 방향키` |
+| pane 확대/축소 | - | `Ctrl-b z` |
+| pane 닫기 | - | `Ctrl-b x` |
+| 레이아웃 순환 | - | `Ctrl-b Space` |
+| 타일 레이아웃 | - | `Ctrl-b Alt-5` |
+
+### 스크롤 & 캡처
+
+| 작업 | 명령어 | 단축키 |
+|------|--------|--------|
+| 스크롤 모드 진입 | - | `Ctrl-b [` |
+| 스크롤 모드 종료 | - | `q` |
+| 출력 파일 저장 | `tmux capture-pane -p > out.log` | - |
+| 전체 버퍼 저장 | `tmux capture-pane -p -S - > out.log` | - |
+| 실시간 로깅 시작 | `tmux pipe-pane "cat >> log.txt"` | - |
+| 실시간 로깅 중지 | `tmux pipe-pane` | - |
+
+---
+
+## A.2 Claude Code 핵심 명령어
+
+### 기본 사용
+
+| 작업 | 명령어 |
+|------|--------|
+| 대화형 모드 시작 | `claude` |
+| 프롬프트 직접 전달 | `claude "작업 내용"` |
+| 파이프 입력 | `cat file \| claude "분석해줘"` |
+| 버전 확인 | `claude --version` |
+| 도움말 | `claude --help` |
+| 인증 설정 | `claude auth` |
+| 사용량 확인 | `claude usage` |
+
+### 환경 설정
+
+| 설정 | 방법 |
+|------|------|
+| API 키 설정 | `export ANTHROPIC_API_KEY="sk-ant-..."` |
+| 프로젝트 컨텍스트 | 프로젝트 루트에 `CLAUDE.md` 작성 |
+
+---
+
+## A.3 Agent Team 프롬프트 템플릿
+
+### 풀스택 개발
+
+```
+[기능명]을 구현해줘. Agent Team으로 병렬 처리:
+
+### 백엔드 에이전트
+- DB 스키마: [테이블 설명]
+- API: [엔드포인트 목록]
+- 파일 범위: src/server/
+
+### 프론트엔드 에이전트
+- 컴포넌트: [컴포넌트 목록]
+- 상태 관리: [상태 설명]
+- 파일 범위: src/client/
+
+### 테스트 에이전트
+- API 테스트: [시나리오]
+- UI 테스트: [시나리오]
+- 파일 범위: tests/
+
+### 제약 조건
+- TypeScript strict 모드
+- 기존 코딩 컨벤션 준수
+```
+
+### 리팩토링
+
+```
+[대상]을 리팩토링해줘. Agent Team으로 병렬 처리:
+
+### 분석 에이전트
+- 현재 구조 분석 및 문제점 식별
+- 변경 영향 범위 파악
+
+### 구현 에이전트
+- [구체적 리팩토링 작업]
+- 파일 범위: [디렉토리]
+
+### 테스트 에이전트
+- 기존 테스트 통과 확인
+- 회귀 테스트 추가
+
+### 주의
+- 외부 인터페이스 변경 금지
+- 기존 테스트 모두 통과 필수
+```
+
+### TypeScript 마이그레이션
+
+```
+이 프로젝트를 TypeScript로 마이그레이션해줘:
+
+### 타입 에이전트
+- src/types/ 에 인터페이스 정의
+- 기존 JSDoc에서 타입 추출
+
+### 변환 에이전트
+- .js -> .ts 파일 변환
+- any 타입 최소화
+- 파일 범위: src/
+
+### 테스트 에이전트
+- 테스트 파일 .ts 변환
+- npx tsc --noEmit 통과 확인
+```
+
+### 코드 리뷰 & 문서화
+
+```
+코드 리뷰와 문서화를 병렬로 진행해줘:
+
+### 리뷰 에이전트
+- 코드 품질, 보안, 성능 분석
+- 결과를 REVIEW.md로 정리
+
+### 문서화 에이전트
+- 모든 export 함수에 JSDoc 추가
+- 기존 코드 동작 변경 금지
+
+### README 에이전트
+- README.md 업데이트
+- API 문서 생성 (docs/API.md)
+```
+
+---
+
+## A.4 tmux 레이아웃 한줄 명령어
+
+```bash
+# 2-pane (좌우)
+tmux new -s dev \; split-window -h \; select-pane -t 0
+
+# 3-pane (좌측 메인 + 우측 상하)
+tmux new -s dev \; split-window -h \; split-window -v \; select-pane -t 0
+
+# 4-pane (타일)
+tmux new -s dev \; split-window -h \; split-window -v \; \
+  select-pane -t 0 \; split-window -v \; select-layout tiled
+
+# 대시보드 (상단 메인 + 하단 3분할)
+tmux new -s dev \; split-window -v -p 30 \; split-window -h \; \
+  split-window -h \; select-pane -t 0
+```
+
+---
+
+## A.5 트러블슈팅 체크리스트
+
+### 환경 설정 확인
+
+```
+[ ] Node.js 18+ 설치 확인       node --version
+[ ] Claude Code 설치 확인        claude --version
+[ ] API 키 설정 확인             echo $ANTHROPIC_API_KEY
+[ ] tmux 설치 확인               tmux -V
+[ ] Git 설치 확인                git --version
+[ ] CLAUDE.md 파일 존재 확인     ls CLAUDE.md
+```
+
+### 자주 발생하는 에러와 해결법
+
+| 증상 | 원인 | 해결 |
+|------|------|------|
+| 에이전트 응답 없음 | API 대기 중 | 1-2분 대기, 계속되면 Ctrl-C |
+| "Rate limit" 메시지 | API 호출 한도 초과 | 에이전트 수 줄이기, 잠시 대기 |
+| 파일 충돌 | 에이전트 간 동시 수정 | git status 확인, 수동 병합 |
+| tmux 세션 사라짐 | OOM 또는 시스템 재시작 | tmux-resurrect 사용 |
+| 타입 에러 폭증 | 잘못된 타입 추론 | 해당 에이전트 중단, 범위 축소 |
+| 에이전트가 범위 벗어남 | 프롬프트가 모호함 | 파일 범위를 디렉토리로 명시 |
+
+### 성능 최적화 체크리스트
+
+```
+[ ] 에이전트 수가 시스템 메모리에 적절한가?
+    (8GB: 2-3개, 16GB: 3-5개)
+[ ] 불필요한 백그라운드 프로세스가 없는가?
+[ ] tmux 스크롤백 버퍼가 적절한가?
+    (기본 2000 -> 권장 10000-30000)
+[ ] 모니터링 명령어의 갱신 간격이 적절한가?
+    (watch -n 5 이상 권장)
+[ ] API 사용량이 예산 내인가?
+```
+
+---
+
+## A.6 Agent Team 워크플로우 요약
+
+```
+전체 워크플로우:
+
+1. 환경 준비            2. 작업 시작            3. 모니터링
+┌──────────────┐      ┌──────────────┐      ┌──────────────┐
+│ tmux 세션 생성 │ ──> │ Claude Code  │ ──> │ pane 분할로    │
+│ 레이아웃 구성  │      │ Agent Team   │      │ 에이전트 관찰  │
+│ CLAUDE.md 준비│      │ 프롬프트 입력  │      │ 리소스 모니터  │
+└──────────────┘      └──────────────┘      └──────────────┘
+                                                  │
+4. 결과 확인            5. 정리                    │
+┌──────────────┐      ┌──────────────┐            │
+│ 코드 리뷰     │ <── │ 로그 캡처     │ <──────────┘
+│ 테스트 실행   │      │ 결과 저장     │
+│ 머지 & 커밋   │      │ 세션 정리     │
+└──────────────┘      └──────────────┘
+```
+
+---
+
+## A.7 유용한 셸 Alias 모음
+
+```bash
+# ~/.bashrc 또는 ~/.zshrc에 추가
+
+# === Agent Team 관리 ===
+alias at-start='bash ~/scripts/agent-team-setup.sh'
+alias at-attach='tmux attach -t agent-team'
+alias at-ls='tmux ls'
+alias at-kill='tmux kill-session -t agent-team'
+
+# === 로그 관리 ===
+alias at-log-start='bash ~/scripts/start-logging.sh'
+alias at-log-stop='bash ~/scripts/stop-logging.sh'
+alias at-log-capture='bash ~/scripts/capture-all-logs.sh'
+
+# === 빠른 모니터링 ===
+alias at-status='watch -n 5 "git status -s"'
+alias at-diff='watch -n 10 "git diff --stat"'
+alias at-log='watch -n 5 "git log --oneline -10"'
+
+# === Claude Code ===
+alias cc='claude'
+alias cc-usage='claude usage'
+```
+
+---
+
+## A.8 추천 tmux.conf 설정
+
+Agent Team 운영에 최적화된 tmux 설정입니다.
+
+```bash
+# ~/.tmux.conf
+
+# === 기본 설정 ===
+set -g default-terminal "screen-256color"
+set -g history-limit 30000
+set -g mouse on
+set -g base-index 1
+setw -g pane-base-index 1
+
+# === 상태바 ===
+set -g status-interval 5
+set -g status-left '[#S] '
+set -g status-left-length 20
+set -g status-right-length 60
+set -g status-right '%H:%M | #(free -h | grep Mem | awk "{print \\$3\"/\"\\$2}")'
+set -g window-status-current-style 'fg=white,bg=blue,bold'
+
+# === 활동 모니터링 ===
+setw -g monitor-activity on
+set -g visual-activity on
+
+# === 윈도우 이름 고정 ===
+set-option -g allow-rename off
+
+# === pane 표시 시간 ===
+set -g display-panes-time 3000
+```
+
+이 가이드가 tmux와 Claude Code Agent Team을 활용한 효율적인 개발 워크플로우를 구축하는 데 도움이 되기를 바랍니다.

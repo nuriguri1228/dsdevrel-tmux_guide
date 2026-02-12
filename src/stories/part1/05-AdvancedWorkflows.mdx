@@ -1,0 +1,829 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="1부: Linux tmux 가이드/05. 실전 워크플로우" />
+
+# 실전 워크플로우
+
+tmux의 기본기를 활용하여 실무에서 생산성을 높이는 방법을 다룹니다. 개발 환경 구축, SSH 원격 작업, 세션 공유, 플러그인, 환경 자동화까지 포괄적으로 안내합니다.
+
+---
+
+## 5.1 개발 환경 구축 (IDE-like Layout)
+
+tmux를 활용하면 IDE와 유사한 개발 환경을 터미널에서 구현할 수 있습니다.
+
+### 목표 레이아웃
+
+```text
+┌───────────────────────────────┬──────────────────┐
+│                               │   git status     │
+│                               │   (Pane 2)       │
+│        nvim .                 ├──────────────────┤
+│       (Pane 1)                │   npm run dev    │
+│                               │   (Pane 3)       │
+│        65% width              │   35% width      │
+└───────────────────────────────┴──────────────────┘
+ [1:editor*  2:logs]                          12:00
+```
+
+- **좌측 큰 페인**: 에디터 (vim/neovim)
+- **우측 상단**: git 상태 또는 파일 탐색
+- **우측 하단**: 개발 서버 또는 테스트 실행
+
+### 수동으로 레이아웃 구성하기
+
+```bash
+# 1. 세션 생성
+tmux new -s dev
+
+# 2. 윈도우 이름 변경: Prefix + , → "editor" 입력
+
+# 3. 수직 분할: Prefix + % (또는 커스텀 설정의 Prefix + |)
+# 4. 우측 페인에서 수평 분할: Prefix + " (또는 Prefix + -)
+
+# 5. 좌측 페인 선택 후 에디터 실행
+#    Prefix + h (vim 스타일) 또는 Prefix + ←
+nvim .
+
+# 6. 우측 상단 페인에서
+git status
+
+# 7. 우측 하단 페인에서
+npm run dev
+```
+
+### 셸 스크립트로 자동 구성
+
+매번 수동으로 레이아웃을 만드는 것은 번거롭습니다. 셸 스크립트로 자동화할 수 있습니다.
+
+```bash
+#!/bin/bash
+# dev-env.sh - 개발 환경 자동 구성 스크립트
+SESSION="dev"
+PROJECT_DIR="$HOME/projects/my-webapp"
+
+# 이미 세션이 존재하면 접속
+tmux has-session -t $SESSION 2>/dev/null
+if [ $? -eq 0 ]; then
+    tmux attach -t $SESSION
+    exit 0
+fi
+
+# 새 세션 생성 (접속하지 않음)
+tmux new-session -d -s $SESSION -c $PROJECT_DIR
+
+# 윈도우 1: 에디터 레이아웃
+tmux rename-window -t $SESSION:1 "editor"
+tmux send-keys -t $SESSION:1 "nvim ." C-m
+
+# 우측에 터미널 페인 추가 (35% 너비)
+tmux split-window -h -t $SESSION:1 -p 35 -c $PROJECT_DIR
+tmux send-keys -t $SESSION:1.2 "git status" C-m
+
+# 우측을 다시 수평 분할
+tmux split-window -v -t $SESSION:1.2 -c $PROJECT_DIR
+tmux send-keys -t $SESSION:1.3 "npm run dev" C-m
+
+# 윈도우 2: 로그
+tmux new-window -t $SESSION -n "logs" -c $PROJECT_DIR
+tmux send-keys -t $SESSION:2 "tail -f logs/app.log" C-m
+
+# 윈도우 3: 터미널 (자유 사용)
+tmux new-window -t $SESSION -n "terminal" -c $PROJECT_DIR
+
+# 첫 번째 윈도우의 에디터 페인에 포커스
+tmux select-window -t $SESSION:1
+tmux select-pane -t $SESSION:1.1
+
+# 세션에 접속
+tmux attach -t $SESSION
+```
+
+사용 방법:
+
+```bash
+chmod +x dev-env.sh
+./dev-env.sh
+```
+
+### 더 복잡한 레이아웃 예시
+
+서버 모니터링 환경:
+
+```text
+┌────────────────────────────────────────────────────┐
+│                   htop (시스템 모니터)               │
+├────────────┬────────────┬──────────────────────────┤
+│ App Log    │ Error Log  │ Access Log               │
+│            │            │                          │
+└────────────┴────────────┴──────────────────────────┘
+```
+
+```bash
+#!/bin/bash
+SESSION="monitor"
+
+tmux new-session -d -s $SESSION
+
+# 상단: htop
+tmux send-keys -t $SESSION "htop" C-m
+
+# 수평 분할 (상단 40%, 하단 60%)
+tmux split-window -v -p 60
+
+# 하단을 3개로 수직 분할
+tmux send-keys "tail -f /var/log/app/app.log" C-m
+tmux split-window -h
+tmux send-keys "tail -f /var/log/app/error.log" C-m
+tmux split-window -h
+tmux send-keys "tail -f /var/log/nginx/access.log" C-m
+
+# 상단 페인으로 포커스
+tmux select-pane -t 0
+
+tmux attach -t $SESSION
+```
+
+---
+
+## 5.2 SSH 원격 작업에서 tmux 활용
+
+### 기본 패턴: SSH 접속 후 tmux 사용
+
+```bash
+# 1. SSH로 서버 접속
+ssh user@server.example.com
+
+# 2. tmux 세션 시작 (또는 기존 세션에 접속)
+tmux attach || tmux new -s work
+
+# 3. 작업 수행...
+
+# 4. 작업 중 잠시 자리를 비울 때: Prefix + d (세션 분리)
+# 5. SSH 연결 종료
+exit
+
+# 6. 나중에 다시 접속하여 세션 복구
+ssh user@server.example.com
+tmux attach -t work
+```
+
+### SSH + tmux 자동 접속 스크립트
+
+매번 SSH 접속 후 tmux를 실행하는 과정을 자동화합니다.
+
+```bash
+#!/bin/bash
+# ssh-tmux.sh - SSH 접속 후 자동으로 tmux 세션에 연결
+# 사용법: ./ssh-tmux.sh hostname [session-name]
+
+HOST=$1
+SESSION=${2:-main}
+
+if [ -z "$HOST" ]; then
+    echo "Usage: $0 <hostname> [session-name]"
+    exit 1
+fi
+
+ssh -t $HOST "tmux attach -t $SESSION 2>/dev/null || tmux new -s $SESSION"
+```
+
+`ssh -t` 옵션은 강제로 가상 터미널을 할당하여 tmux가 정상적으로 실행되도록 합니다.
+
+### 연결 끊김 후 세션 복구
+
+SSH 연결이 의도치 않게 끊기는 상황은 자주 발생합니다. tmux를 사용하면 다음과 같이 대처할 수 있습니다.
+
+```text
+┌──────────────────────────────────────────┐
+│             복구 시나리오                   │
+│                                          │
+│  1. SSH 접속 중 작업                      │
+│     ssh → tmux 세션 안에서 빌드 실행       │
+│                                          │
+│  2. 네트워크 끊김 발생                     │
+│     SSH 연결 종료, 하지만 tmux 세션 유지!  │
+│                                          │
+│  3. 다시 접속                             │
+│     ssh → tmux attach                    │
+│     → 빌드가 계속 진행 중인 것을 확인      │
+└──────────────────────────────────────────┘
+```
+
+### 중첩 tmux 처리 (로컬 + 원격)
+
+로컬에서 tmux를 사용하면서 SSH로 접속한 원격 서버에서도 tmux를 사용하면, Prefix 키가 충돌합니다.
+
+```text
+┌─ 로컬 tmux ──────────────────────────────────────┐
+│ Prefix: Ctrl+a                                    │
+│ ┌─ 원격 tmux (SSH) ─────────────────────────────┐ │
+│ │ Prefix: Ctrl+b (또는 Ctrl+a)                  │ │
+│ │                                               │ │
+│ │  원격 작업 내용                                 │ │
+│ │                                               │ │
+│ │ [remote-session] 0:bash*              14:00   │ │
+│ └───────────────────────────────────────────────┘ │
+│ [local-session] 0:ssh*  1:local         14:00    │
+└──────────────────────────────────────────────────┘
+```
+
+#### 해결 방법 1: 다른 Prefix 사용
+
+로컬과 원격에서 서로 다른 Prefix 키를 사용합니다.
+
+```bash
+# 로컬 ~/.tmux.conf: Ctrl+a 사용
+set -g prefix C-a
+
+# 원격 ~/.tmux.conf: Ctrl+b 유지 (기본값)
+# 또는 Ctrl+b를 유지하되, send-prefix 설정
+```
+
+#### 해결 방법 2: send-prefix 사용
+
+로컬 Prefix가 `Ctrl+a`일 때, 원격 tmux(Prefix: `Ctrl+b`)에 명령을 보내려면:
+
+```text
+로컬 tmux 명령:  Ctrl+a → 명령키
+원격 tmux 명령:  Ctrl+a → Ctrl+b → 명령키
+```
+
+로컬과 원격 모두 `Ctrl+a`를 Prefix로 사용한다면:
+
+```bash
+# 로컬 ~/.tmux.conf
+bind a send-prefix    # Ctrl+a → a 로 원격에 Ctrl+a 전달
+```
+
+```text
+로컬 tmux 명령:  Ctrl+a → 명령키
+원격 tmux 명령:  Ctrl+a → a → 명령키
+```
+
+### Mosh + tmux 조합
+
+네트워크가 불안정한 환경에서는 SSH 대신 **Mosh**(Mobile Shell)를 사용하면 끊김 없이 작업할 수 있습니다. Mosh는 UDP 기반으로 동작하며, IP 변경이나 일시적인 연결 끊김에 자동으로 재연결됩니다.
+
+```bash
+# Mosh 설치
+sudo apt install mosh
+
+# Mosh로 접속
+mosh user@server.example.com
+
+# Mosh + tmux 조합
+mosh user@server.example.com -- tmux attach -t main
+```
+
+---
+
+## 5.3 세션 공유 (Pair Programming)
+
+tmux를 사용하면 같은 세션에 여러 사용자가 동시에 접속하여 같은 화면을 보면서 작업할 수 있습니다.
+
+### 소켓 공유 방식
+
+```bash
+# 호스트 (세션 생성자)
+# 공유 소켓으로 세션 생성
+tmux -S /tmp/pair-session new -s pair
+
+# 소켓 파일에 다른 사용자 접근 권한 부여
+chmod 777 /tmp/pair-session
+```
+
+```bash
+# 게스트 (세션 참여자)
+# 같은 소켓으로 세션에 접속
+tmux -S /tmp/pair-session attach -t pair
+```
+
+```bash
+# 읽기 전용 접속 (관찰만)
+tmux -S /tmp/pair-session attach -t pair -r
+```
+
+### tmate 소개
+
+**tmate**는 tmux 기반의 세션 공유 전용 도구입니다. 별도의 서버 설정 없이 인터넷을 통해 tmux 세션을 공유할 수 있습니다.
+
+```bash
+# 설치
+sudo apt install tmate
+
+# 세션 시작
+tmate
+
+# 시작하면 화면 하단에 공유 URL이 표시됨:
+# ssh ro-XXXXX@nyc1.tmate.io  (읽기 전용)
+# ssh XXXXX@nyc1.tmate.io     (읽기/쓰기)
+```
+
+공유 URL을 동료에게 전달하면, 동료는 SSH 클라이언트만으로 세션에 참여할 수 있습니다. tmate 설치가 필요 없습니다.
+
+---
+
+## 5.4 tmux + vim/neovim 조합
+
+### vim-tmux-navigator
+
+vim과 tmux의 페인 이동을 통합하는 플러그인입니다. `Ctrl+h/j/k/l`로 vim 분할과 tmux 페인 사이를 자유롭게 이동할 수 있습니다.
+
+#### 설치
+
+vim/neovim 플러그인 설치 (vim-plug 기준):
+
+```vim
+" ~/.config/nvim/init.vim 또는 ~/.vimrc
+Plug 'christoomey/vim-tmux-navigator'
+```
+
+tmux 설정 추가:
+
+```bash
+# ~/.tmux.conf
+# vim-tmux-navigator와 연동
+is_vim="ps -o state= -o comm= -t '#{pane_tty}' \
+    | grep -iqE '^[^TXZ ]+ +(\\S+\\/)?g?(view|l?n?vim?x?|fzf)(diff)?$'"
+bind -n 'C-h' if-shell "$is_vim" 'send-keys C-h' 'select-pane -L'
+bind -n 'C-j' if-shell "$is_vim" 'send-keys C-j' 'select-pane -D'
+bind -n 'C-k' if-shell "$is_vim" 'send-keys C-k' 'select-pane -U'
+bind -n 'C-l' if-shell "$is_vim" 'send-keys C-l' 'select-pane -R'
+```
+
+이 설정으로 다음과 같이 동작합니다:
+
+```text
+┌────────────────────┬──────────────────┐
+│  vim (split left)  │  vim (split      │
+│                    │   right)         │
+│   Ctrl+l →         │   Ctrl+l →       │  ← vim 내부
+├────────────────────┴──────────────────┤     이동과
+│                                       │     tmux 페인
+│  tmux pane (terminal)                 │     이동이 통합
+│  ← Ctrl+k 로 위 vim으로 이동           │
+└───────────────────────────────────────┘
+```
+
+### 효율적인 vim + tmux 워크플로우
+
+| 작업 | 권장 방법 |
+|------|-----------|
+| 코드 편집 | vim 내부 split 사용 |
+| 터미널 작업 (빌드, git 등) | 별도 tmux 페인 사용 |
+| 파일 탐색 | vim 내장 기능 또는 fzf |
+| 로그 확인 | 별도 tmux 윈도우 사용 |
+| 테스트 실행 | 별도 tmux 페인에서 watch 모드 |
+
+---
+
+## 5.5 유용한 tmux 플러그인
+
+### TPM (Tmux Plugin Manager)
+
+tmux 플러그인을 관리하는 패키지 매니저입니다.
+
+#### TPM 설치
+
+```bash
+git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+```
+
+#### TPM 설정
+
+```bash
+# ~/.tmux.conf 맨 아래에 추가
+
+# 플러그인 목록
+set -g @plugin 'tmux-plugins/tpm'
+set -g @plugin 'tmux-plugins/tmux-sensible'
+set -g @plugin 'tmux-plugins/tmux-resurrect'
+set -g @plugin 'tmux-plugins/tmux-continuum'
+set -g @plugin 'tmux-plugins/tmux-yank'
+
+# TPM 초기화 (반드시 설정 파일 맨 아래에 위치)
+run '~/.tmux/plugins/tpm/tpm'
+```
+
+#### TPM 사용법
+
+| 단축키 | 설명 |
+|--------|------|
+| `Prefix + I` | 설정 파일에 추가된 플러그인 설치 |
+| `Prefix + U` | 설치된 플러그인 업데이트 |
+| `Prefix + Alt+u` | 목록에서 제거된 플러그인 삭제 |
+
+### tmux-resurrect
+
+tmux 세션의 상태를 파일로 저장하고, 시스템 재부팅 후에도 복원할 수 있는 플러그인입니다.
+
+```bash
+# ~/.tmux.conf
+set -g @plugin 'tmux-plugins/tmux-resurrect'
+
+# 페인 내용도 함께 저장
+set -g @resurrect-capture-pane-contents 'on'
+
+# neovim 세션 복원 지원
+set -g @resurrect-strategy-nvim 'session'
+```
+
+```text
+┌──────────┐    Prefix + Ctrl+s    ┌──────────────┐
+│  Running  │ ──────────────────→ │  Saved State  │
+│  Session  │    (저장)            │  (~/.tmux/    │
+│           │                     │   resurrect/) │
+└──────────┘                      └──────┬───────┘
+     ↑                                   │
+     │        Prefix + Ctrl+r            │
+     └───────────────────────────────────┘
+                  (복원)
+```
+
+| 단축키 | 설명 |
+|--------|------|
+| `Prefix + Ctrl+s` | 현재 세션 상태 저장 |
+| `Prefix + Ctrl+r` | 저장된 세션 상태 복원 |
+
+### tmux-continuum
+
+tmux-resurrect를 자동화하는 플러그인입니다. 주기적으로 세션을 자동 저장하고, tmux 서버 시작 시 자동으로 복원합니다.
+
+```bash
+# ~/.tmux.conf
+set -g @plugin 'tmux-plugins/tmux-continuum'
+
+# 자동 복원 활성화
+set -g @continuum-restore 'on'
+
+# 자동 저장 간격 (분 단위, 기본값: 15)
+set -g @continuum-save-interval '15'
+```
+
+### tmux-yank
+
+시스템 클립보드 연동을 간편하게 해주는 플러그인입니다. 플랫폼(Linux X11, Linux Wayland, macOS)을 자동으로 감지합니다.
+
+```bash
+# ~/.tmux.conf
+set -g @plugin 'tmux-plugins/tmux-yank'
+```
+
+### tmux-sensible
+
+대부분의 사용자에게 합리적인 기본 설정을 모아둔 플러그인입니다. 설정 파일의 시작점으로 유용합니다.
+
+```bash
+# ~/.tmux.conf
+set -g @plugin 'tmux-plugins/tmux-sensible'
+```
+
+포함되는 설정:
+- `escape-time 0`: ESC 지연 제거
+- `history-limit 50000`: 스크롤백 버퍼 증가
+- `display-time 4000`: 메시지 표시 시간 증가
+- `focus-events on`: 포커스 이벤트 활성화
+- 기타 합리적인 기본값들
+
+### 테마 플러그인
+
+```bash
+# Catppuccin 테마 (인기 테마)
+set -g @plugin 'catppuccin/tmux'
+set -g @catppuccin_flavor 'mocha'
+
+# Dracula 테마
+# set -g @plugin 'dracula/tmux'
+
+# Nord 테마
+# set -g @plugin 'nordtheme/tmux'
+```
+
+---
+
+## 5.6 스크립트를 이용한 환경 자동화
+
+### 셸 스크립트 방식
+
+앞서 5.1에서 본 것처럼 tmux 명령어를 직접 스크립트로 작성하는 방법입니다. 가장 유연하지만 코드량이 많아질 수 있습니다.
+
+### tmuxinator
+
+YAML 파일로 tmux 세션 구성을 선언적으로 정의하는 도구입니다.
+
+#### 설치
+
+```bash
+# Ruby gem으로 설치
+gem install tmuxinator
+
+# 또는 패키지 매니저
+sudo apt install tmuxinator   # Ubuntu/Debian
+```
+
+#### 프로젝트 설정 생성
+
+```bash
+tmuxinator new webapp
+```
+
+이 명령은 `~/.tmuxinator/webapp.yml` 파일을 생성하고 편집기를 엽니다.
+
+#### 프로젝트 설정 예시
+
+```yaml
+# ~/.tmuxinator/webapp.yml
+name: webapp
+root: ~/projects/my-webapp
+
+# 시작 전 실행할 명령 (선택)
+on_project_start: docker compose up -d
+
+windows:
+  - editor:
+      layout: main-vertical
+      panes:
+        - nvim
+        - git log --oneline -20
+  - server:
+      panes:
+        - npm run dev
+  - database:
+      panes:
+        - docker compose logs -f db
+  - terminal:
+      panes:
+        -    # 빈 셸
+```
+
+#### tmuxinator 명령어
+
+```bash
+# 프로젝트 시작
+tmuxinator start webapp
+
+# 프로젝트 종료
+tmuxinator stop webapp
+
+# 프로젝트 목록
+tmuxinator list
+
+# 프로젝트 설정 편집
+tmuxinator edit webapp
+
+# 프로젝트 삭제
+tmuxinator delete webapp
+```
+
+### tmuxp
+
+tmuxinator와 유사하지만 Python 기반이며, JSON과 YAML 모두 지원합니다.
+
+#### 설치
+
+```bash
+pip install tmuxp
+```
+
+#### 프로젝트 설정 예시 (YAML)
+
+```yaml
+# ~/.tmuxp/webapp.yaml
+session_name: webapp
+start_directory: ~/projects/my-webapp
+windows:
+  - window_name: editor
+    layout: main-vertical
+    panes:
+      - shell_command: nvim
+      - shell_command: git status
+  - window_name: server
+    panes:
+      - shell_command: npm run dev
+  - window_name: terminal
+    panes:
+      - shell_command: ""
+```
+
+#### 프로젝트 설정 예시 (JSON)
+
+```json
+{
+  "session_name": "webapp",
+  "start_directory": "~/projects/my-webapp",
+  "windows": [
+    {
+      "window_name": "editor",
+      "layout": "main-vertical",
+      "panes": [
+        { "shell_command": "nvim" },
+        { "shell_command": "git status" }
+      ]
+    },
+    {
+      "window_name": "server",
+      "panes": [
+        { "shell_command": "npm run dev" }
+      ]
+    }
+  ]
+}
+```
+
+#### tmuxp 명령어
+
+```bash
+# 세션 로드
+tmuxp load webapp
+
+# 또는 파일 경로 직접 지정
+tmuxp load ~/.tmuxp/webapp.yaml
+```
+
+### tmuxinator vs tmuxp 비교
+
+| 항목 | tmuxinator | tmuxp |
+|------|-----------|-------|
+| 언어 | Ruby | Python |
+| 설정 형식 | YAML | YAML, JSON |
+| 설치 | `gem install` | `pip install` |
+| 기능 | 성숙, 안정적 | 유연, Python 연동 |
+| 커뮤니티 | 더 큼 | 활발 |
+
+---
+
+## 5.7 트러블슈팅 & 자주 묻는 질문
+
+### tmux 세션이 시작되지 않을 때
+
+```bash
+# tmux 서버 상태 확인
+tmux info
+
+# 서버 강제 종료 후 재시작
+tmux kill-server
+tmux
+```
+
+```bash
+# 소켓 파일 문제 확인
+ls -la /tmp/tmux-$(id -u)/
+
+# 소켓 파일 권한 문제 해결
+rm -rf /tmp/tmux-$(id -u)/
+tmux
+```
+
+### 색상이 제대로 표시되지 않을 때
+
+```bash
+# 현재 TERM 환경 변수 확인
+echo $TERM
+
+# tmux 안에서 확인
+tmux show -g default-terminal
+
+# 해결: ~/.tmux.conf에 올바른 설정
+set -g default-terminal "tmux-256color"
+set -ag terminal-overrides ",xterm-256color:RGB"
+```
+
+```bash
+# terminfo 설치 (tmux-256color가 없는 경우)
+# Ubuntu/Debian
+sudo apt install ncurses-term
+
+# 또는 수동 설치
+infocmp tmux-256color > /dev/null 2>&1 || echo "tmux-256color not found"
+```
+
+### 복사/붙여넣기가 작동하지 않을 때
+
+```bash
+# xclip 또는 xsel이 설치되어 있는지 확인
+which xclip || echo "xclip not installed"
+which xsel || echo "xsel not installed"
+
+# 설치
+sudo apt install xclip
+
+# SSH 원격 접속 시: X11 forwarding 필요
+ssh -X user@server    # X11 forwarding 활성화
+```
+
+SSH를 통해 접속한 원격 서버에서는 X11 forwarding이 필요합니다. 또는 OSC 52 이스케이프 시퀀스를 지원하는 터미널 에뮬레이터를 사용하면 X11 없이도 클립보드를 공유할 수 있습니다.
+
+```bash
+# OSC 52 지원 설정 (tmux 3.3+)
+set -g set-clipboard on
+```
+
+### 키 바인딩이 작동하지 않을 때
+
+```bash
+# 현재 키 바인딩 확인
+tmux list-keys
+
+# 특정 키의 바인딩 확인
+tmux list-keys | grep "split-window"
+
+# 설정 파일 문법 오류 확인
+tmux source-file ~/.tmux.conf
+# 오류가 있으면 메시지 표시됨
+```
+
+### 버전 간 설정 호환성 문제
+
+tmux 버전에 따라 설정 문법이 다를 수 있습니다. 주요 변경 사항:
+
+```bash
+# tmux 2.1 이전 (마우스 설정이 분리되어 있었음)
+set -g mode-mouse on
+set -g mouse-select-pane on
+set -g mouse-resize-pane on
+
+# tmux 2.1 이후 (통합)
+set -g mouse on
+```
+
+```bash
+# 버전 확인 후 조건부 설정
+# tmux 명령 모드에서:
+if-shell "tmux -V | grep -q '3\\.'" \
+    "set -g mouse on" \
+    "set -g mode-mouse on"
+```
+
+### tmux 서버 완전 종료
+
+모든 세션을 종료하고 tmux 서버를 완전히 종료합니다.
+
+```bash
+# 모든 세션 종료
+tmux kill-server
+
+# 특정 세션만 종료
+tmux kill-session -t session-name
+
+# 현재 세션을 제외한 모든 세션 종료
+tmux kill-session -a
+```
+
+> **주의:** `kill-server`는 모든 세션과 그 안에서 실행 중인 프로세스를 종료합니다. 중요한 작업이 실행 중인지 반드시 확인하세요.
+
+---
+
+## 마무리: tmux 필수 명령어 치트시트
+
+```text
+┌────────────────────────────────────────────────────────────┐
+│                   tmux 필수 명령어 치트시트                  │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+│  세션 (Session)                                            │
+│  ─────────────────────────────────────────────────         │
+│  tmux new -s <name>        새 세션 생성                     │
+│  tmux ls                   세션 목록                        │
+│  tmux attach -t <name>     세션 재접속                      │
+│  tmux kill-session -t <n>  세션 종료                        │
+│  Prefix + d                세션 분리 (Detach)               │
+│  Prefix + s                세션 전환                        │
+│                                                            │
+│  윈도우 (Window)                                           │
+│  ─────────────────────────────────────────────────         │
+│  Prefix + c                새 윈도우                        │
+│  Prefix + n / p            다음 / 이전 윈도우               │
+│  Prefix + 0-9              번호로 이동                      │
+│  Prefix + ,                이름 변경                        │
+│  Prefix + &                윈도우 닫기                      │
+│                                                            │
+│  페인 (Pane)                                               │
+│  ─────────────────────────────────────────────────         │
+│  Prefix + "                수평 분할                        │
+│  Prefix + %                수직 분할                        │
+│  Prefix + 화살표           페인 이동                        │
+│  Prefix + z                확대/축소 (Zoom)                 │
+│  Prefix + x                페인 닫기                        │
+│  Prefix + Space            레이아웃 순환                    │
+│                                                            │
+│  복사 모드                                                  │
+│  ─────────────────────────────────────────────────         │
+│  Prefix + [                복사 모드 진입                   │
+│  Space → 이동 → Enter      선택 및 복사 (vi 모드)           │
+│  Prefix + ]                붙여넣기                         │
+│                                                            │
+│  기타                                                      │
+│  ─────────────────────────────────────────────────         │
+│  Prefix + :                명령 모드                        │
+│  Prefix + ?                키 바인딩 목록                   │
+│  tmux kill-server          서버 종료                        │
+│                                                            │
+└────────────────────────────────────────────────────────────┘
+```
+
+---
+
+이것으로 1부 **Linux tmux 사용 가이드**를 마칩니다. tmux의 기본 개념부터 설치, 기본 조작, 세션/윈도우 관리, 설정 커스터마이징, 실전 워크플로우까지 다루었습니다.
+
+2부에서는 tmux 환경을 활용하여 **Claude Code의 Agent Team 기능**을 사용하는 방법을 알아봅니다.
